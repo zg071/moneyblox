@@ -33,9 +33,9 @@ if not LPH_OBFUSCATED then
 	LPH_CRASH = function()
 		return print(debug.traceback());
 	end;
-	SWG_DiscordUser = "swim"
+	SWG_DiscordUser = "furre"
 	SWG_DiscordID = 1337
-	SWG_SecondsLeft = 9999
+	SWG_SecondsLeft = 9999999999999999999999999999999
 	SWG_Note = "scp,alpha"
 	SWG_IsLifetime = true
 end;
@@ -76,7 +76,7 @@ local Fonts, Images = LPH_JIT(function()
 	local HttpService = game:GetService("HttpService")
 
 	local Fonts = {
-		URL = "https://raw.githubusercontent.com/SWIMHUBISWIMMING/librehub/refs/heads/main/assets/",
+		URL = "https://raw.githubusercontent.com/zg071/moneyblox/tree/main/assets/",
 
 		Names = {
 			"Tahoma",
@@ -9179,75 +9179,6 @@ do
 
 		-- this desync was fucking made by D-D-D-D-DJ SWIMDROID
 		-- ТЁЛКИ СНИМАЙТЕ ТРУСЫ		
-	end
-
-	if type(raknet) == "table" then
-
-		local rak_keybind; rak_keybind = expsec:Toggle({Name = "Raksync", Value = false, Flag = "desync_raksync", Callback = function(bool)
-			raksync = bool
-		end}):Keybind({Name = "Raksync", Mode = "Toggle", Key = Enum.KeyCode.M, Value = false, Flag = "desync_raksync_key", Callback = function(bool)
-			raksync_key = raksync and bool
-			rak_keybind.Set(raksync_key, true)
-		end})
-		--setfflag("S2PhysicsSenderRate", "15")
-
-		local function disect(packetData)
-			local iter = 0
-			local hextable = {}
-			local hex = buffer.tostring(packetData):gsub(".", function(char)
-				iter += 1
-				local st = string.format("%x", char:byte())
-				local rs = (#st == 1 and "0" or "") .. st
-				hextable[iter - 1] = rs
-				return rs .. " " .. (iter % 8 == 0 and "\n" or "")
-			end)
-			return hextable, hex
-		end
-
-		local old_packet_timer
-
-		if ({identifyexecutor()})[1] == "Synapse Z" then
-
-		else
-			raknet.add_send_hook(function(packetData)
-				local packetId = buffer.readu8(packetData, 0)
-				if packetId == 0x1B then
-					if not (raksync and raksync_key) then
-						old_packet_timer = nil
-						return true
-					end
-
-					local hextable, hex = disect(packetData)
-
-					local packet_timer = ""
-					local packet_id = ""
-					for i = 1, 8 do
-						packet_timer ..= hextable[i]
-					end
-					for i = 9, 16 do
-						packet_id ..= hextable[i]
-					end
-
-					packet_timer, packet_id = tonumber(packet_timer, 16), tonumber(packet_id, 16)
-
-					if not old_packet_timer then
-						old_packet_timer = packet_timer
-					end
-
-					packet_timer = old_packet_timer
-
-					local axx = buffer.create(4)
-					buffer.writeu32(axx, 0, packet_timer)
-					local packet_timer_hex = disect(axx)
-					for i = 0, 3 do
-						local n = tonumber(packet_timer_hex[i],16)
-						buffer.writeu8(packetData, 8 - i --[[i + 5]], n)
-					end
-					local hextable, hex = disect(packetData)
-				end
-				return true
-			end)
-		end
 	end
 
 	getgenv().animbreaker_x = 0
