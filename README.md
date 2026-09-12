@@ -5,7 +5,7 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/zg071/moneyblox/refs/
 
 # Universal
 ```lua
-loadstring(game:HttpGet("https://raw.githubusercontent.com/SWIMHUBISWIMMING/librehub/refs/heads/main/universal.lua"))()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/zg071/moneyblox/refs/heads/main/universal.lua"))()
 ```
 
 # Credits
