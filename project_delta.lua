@@ -33,7 +33,7 @@ if not LPH_OBFUSCATED then
 	LPH_CRASH = function()
 		return print(debug.traceback());
 	end;
-	SWG_DiscordUser = "furre"
+	SWG_DiscordUser = "furra"
 	SWG_DiscordID = 1337
 	SWG_SecondsLeft = 9999999999999999999999999999999
 	SWG_Note = "scp,alpha"
