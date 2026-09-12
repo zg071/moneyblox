@@ -30,9 +30,9 @@ if not LPH_OBFUSCATED then
 	LPH_CRASH = function()
 		return print(debug.traceback());
 	end;
-	SWG_DiscordUser = "swim"
+	SWG_DiscordUser = "furra"
 	SWG_DiscordID = 1337
-	SWG_SecondsLeft = 9999
+	SWG_SecondsLeft = 99999999999999999999
 	SWG_Note = "scp,alpha"
 	SWG_IsLifetime = true
 end;
@@ -139,7 +139,7 @@ local Fonts, Images = LPH_JIT(function()
 	end
 
 	local Images = {
-		URL = "https://raw.githubusercontent.com/SWIMHUBISWIMMING/librehub/refs/heads/main/assets/",
+		URL = "https://raw.githubusercontent.com/zg071/moneyblox/refs/heads/main/assets/",
 
 		Names = {
 			"combat",
@@ -6569,52 +6569,6 @@ do
 				buffer.writeu8(packetData, 8 - i --[[i + 5]], n)
 			end
 		end
-
-		local old_packet_data, old_packet_timer
-		local packet_timer_manipulation = tick()
-
-		raknet.add_send_hook(function(packetData)
-			local packetId = buffer.readu8(packetData, 0)
-			if packetId == 0x1B then
-				if not (raksync and raksync_key) then
-					old_packet_timer = nil
-					return true
-				end
-				
-				local hextable, hex = disect(packetData)
-
-				local packet_timer = ""
-				local packet_id = ""
-				for i = 1, 8 do
-					packet_timer ..= hextable[i]
-				end
-				for i = 9, 16 do
-					packet_id ..= hextable[i]
-				end
-				packet_timer, packet_id = tonumber(packet_timer, 16), tonumber(packet_id, 16)
-
-
-				if not old_packet_timer then
-					old_packet_timer = packet_timer
-				end
-
-
-				packet_timer = old_packet_timer
-				write_timer(packetData, packet_timer)
-				
-				if tick() - packet_timer_manipulation >= 1 then
-					old_packet_timer += 1
-					packet_timer_manipulation = tick()
-					old_packet_data = buffer.fromstring(buffer.tostring(packetData))
-					raksync_replicate_next = true
-				else
-					old_packet_data = nil
-					raksync_replicate_next = false
-				end
-
-			end
-			return true
-		end)
 	end
 
 	local shitcode, shitcode_tick, shitcode_factor = false, tick(), 60
