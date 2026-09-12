@@ -1,6 +1,6 @@
 # Project Delta
 ```lua
-loadstring(game:HttpGet("https://raw.githubusercontent.com/SWIMHUBISWIMMING/librehub/refs/heads/main/project_delta.lua"))()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/zg071/moneyblox/refs/heads/main/project_delta.lua"))()
 ```
 
 # Universal
