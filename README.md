@@ -10,5 +10,5 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/SWIMHUBISWIMMING/libr
 
 # Credits
 swimdroid (s._wm) - Making this script. </br>
-office (ox_y) - Providing the UI.
-zg07 - Update moneyblox
+office (ox_y) - Providing the UI. </br>
+furra (zg07) - Updating this script.
