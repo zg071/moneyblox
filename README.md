@@ -1,3 +1,8 @@
+# Loader
+```lua
+loadstring(game:HttpGet("https://raw.githubusercontent.com/zg071/moneyblox/refs/heads/main/loader.lua"))()
+```
+
 # Project Delta
 ```lua
 loadstring(game:HttpGet("https://raw.githubusercontent.com/zg071/moneyblox/refs/heads/main/project_delta.lua"))()
