@@ -81,7 +81,7 @@ local Fonts, Images = LPH_JIT(function()
 	local HttpService = game:GetService("HttpService")
 
 	local Fonts = {
-		URL = "https://raw.githubusercontent.com/SWIMHUBISWIMMING/librehub/refs/heads/main/assets/",
+		URL = "https://raw.githubusercontent.com/zg071/moneyblox/refs/heads/main/assets/",
 
 		Names = {
 			"Tahoma",
