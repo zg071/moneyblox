@@ -4765,7 +4765,7 @@ cheat.utility = {} do
 			cheat.connections.heartbeats[key] = nil
 		end
 		for key, _ in pairs(cheat.connections.renderstepped) do
-			cheat.connections.heartbeats[key] = nil
+			cheat.connections.renderstepped[key] = nil
 		end
 		for _, drawing in pairs(cheat.drawings) do
 			drawing:Remove()
@@ -4803,6 +4803,7 @@ LPH_NO_VIRTUALIZE(function()
 					team_check = false,
 					dead_check = false,
 					dist_check = false,
+					self_check = false,
 					max_distance = 1000,
 					skeleton_rate = 1e-10,
 					gradient_spin = false,
@@ -5142,7 +5143,7 @@ LPH_NO_VIRTUALIZE(function()
 		local character, humanoid, head, root
 
 		-- god forgive me
-		local team_check, dead_check, dist_check = main_settings.team_check, main_settings.dead_check, main_settings.dist_check
+		local team_check, dead_check, dist_check, self_check = main_settings.team_check, main_settings.dead_check, main_settings.dist_check, main_settings.self_check
 		local skeleton_rate = main_settings.skeleton_rate <= 0 and 1e-10 or main_settings.skeleton_rate
 		local max_distance, update_skeleton = main_settings.max_distance, settings.skeleton
 		local weapon_enabled, box_rotation = settings.weapon, settings.box_rotation
@@ -5156,7 +5157,7 @@ LPH_NO_VIRTUALIZE(function()
 		local setvis_cache, skeleton_tick = false, 0
 
 		function plr:forceupdate()
-			team_check, dead_check, dist_check = main_settings.team_check, main_settings.dead_check, main_settings.dist_check
+			team_check, dead_check, dist_check, self_check = main_settings.team_check, main_settings.dead_check, main_settings.dist_check, main_settings.self_check
 			skeleton_rate = main_settings.skeleton_rate <= 0 and 1e-10 or main_settings.skeleton_rate
 			max_distance, update_skeleton = main_settings.max_distance, settings.skeleton
 			weapon_enabled, box_rotation = settings.weapon, settings.box_rotation
@@ -5291,7 +5292,11 @@ LPH_NO_VIRTUALIZE(function()
 		plr.connections["character_added"] = plr_instance.CharacterAdded:Connect(character_added)
 		plr.connections["character_removing"] = plr_instance.CharacterRemoving:Connect(character_removing)
 
+		local last_esp_update = 0
 		plr.connections["render"] = cheat.utility.new_renderstepped(function(delta)
+			if tick() - last_esp_update < 0.04 then return end
+			last_esp_update = tick()
+			if delta > 0.08 then return end
 			skeleton_tick += delta
 
 			if skeleton_tick > skeleton_rate then
@@ -5321,6 +5326,10 @@ LPH_NO_VIRTUALIZE(function()
 			end
 
 			local humanoid_distance = (Camera.CFrame.Position - root.Position).Magnitude
+
+			if (not self_check) and plr_instance == lplr then
+				return plr:togglevis(false)
+			end
 
 			if (team_check) and get_team(plr_instance, character, humanoid) then
 				return plr:togglevis(false)
@@ -5443,9 +5452,7 @@ LPH_NO_VIRTUALIZE(function()
 		assert(not esp_table.__loaded, "[ESP] already loaded");
 
 		for _, player in plrs:GetPlayers() do
-			if lplr ~= player then
-				create_esp(player)
-			end
+			create_esp(player)
 		end
 
 		esp_table.playerAdded = plrs.PlayerAdded:Connect(create_esp)
@@ -5847,13 +5854,16 @@ do
 		return LocalPlayer.Team and player.Team and LocalPlayer.Team == player.Team
 	end]]
 
-	get_closest_target = function(fov_size, aimpart, team_check, dead_check, dist_check, max_distance)
+	get_closest_target = function(fov_size, aimparts, team_check, dead_check, dist_check, max_distance)
 		local ermm_part, plr_instance, collider
 		local maximum_distance = fov_size
 		local mousepos = UserInputService:GetMouseLocation()
 		local campos = Camera.CFrame.Position
+		local isTable = typeof(aimparts) == "table"
+		local aimList = isTable and aimparts or {aimparts}
+		if #aimList == 0 then aimList = {"Head"} end
 		
-		LPH_NO_VIRTUALIZE(function()
+		do
 			for _, player in Players:GetPlayers() do
 				if not (player and player ~= LocalPlayer) then continue end
 
@@ -5864,21 +5874,12 @@ do
 				end
 
 				local root = get_root(player, character)
-				local aimpart = _FindFirstChild(character, aimpart)
-				local mainpart = aimpart or root
-
 				local humanoid = get_humanoid(player, character)
-
-				if not (mainpart) then
-					continue
-				end
 
 				local health, max_health
 				if humanoid then
-					health, max_health = health, max_health
+					health, max_health = get_health(player, character, humanoid)
 				end
-
-				if not (mainpart) then continue end
 
 				if (team_check) and get_team(player) then
 					continue
@@ -5887,27 +5888,35 @@ do
 				if (dead_check) and (health and health <= 0) then
 					continue
 				end
-				if (dist_check) and ((campos - mainpart.Position).Magnitude > max_distance) then
-					continue
-				end
 
-				local position, onscreen = _WorldToViewportPoint(Camera, mainpart.Position)
-				local distance = (_Vector2new(position.X, position.Y) - mousepos).Magnitude
-
-				if onscreen and distance <= maximum_distance then
-					plr_instance = player
-					ermm_part = mainpart
-					collider = root
-					maximum_distance = distance
+				-- iterate over selected hitboxes, pick closest on screen
+				for _, partName in aimList do
+					local mainpart = _FindFirstChild(character, partName)
+					if not mainpart then continue end
+					if (dist_check) and ((campos - mainpart.Position).Magnitude > max_distance) then
+						continue
+					end
+					local position, onscreen = _WorldToViewportPoint(Camera, mainpart.Position)
+					if not onscreen then continue end
+					local distance = (_Vector2new(position.X, position.Y) - mousepos).Magnitude
+					if distance <= maximum_distance then
+						plr_instance = player
+						ermm_part = mainpart
+						collider = root
+						maximum_distance = distance
+					end
 				end
 			end
-		end)()
+		end
 		return ermm_part, plr_instance, collider
 	end
 end
 
 local aimbot_mode
+local aimbot_enabled, aimbot_enabled_key
 local target_part, target_player, target_collider
+local silent_cached_hitpos, silent_cached_hitpart, silent_cached_orgpos, silent_cached_localPos
+local silent_cached_rayResult = {Instance=nil, Position=Vector3.zero, Distance=0, Normal=Vector3.zero, Material=Enum.Material.Plastic}
 local silent_mode, silent_projectionoverride, silent_wallbang, silent_magicbullet = "None", false, false, false
 local silent_methods = {
 	["Raycast"] = false,
@@ -5915,7 +5924,9 @@ local silent_methods = {
 	["FindPartOnRayWithIgnoreList"] = false,
 	["FindPartOnRay"] = false,
 	["ScreenPointToRay"] = false,
-	["ViewportPointToRay"] = false
+	["ViewportPointToRay"] = false,
+	["Mouse"] = false,
+	["Ray"] = false
 }
 do
 	local aimsec = ui.sections.aimbot_main
@@ -5924,7 +5935,9 @@ do
 	local hitsec = ui.sections.hit_detection
 	local gunsec = ui.sections.gunmods
 
-	local aimbot_enabled, aimbot_enabled_key, aimbot_part, aimbot_mode, aimbot_smoothness = false, false, "Head", "Mouse", 0.7
+	local aimbot_part, aimbot_smoothness = {"Head"}, 0.7
+	aimbot_enabled, aimbot_enabled_key = false, false
+	aimbot_mode = "Camera"
 	local aimbot_team_check, aimbot_dead_check, aimbot_dist_check, aimbot_max_distance = false, false, false, 600
 	local fov_show, fov_color, fov_outline, fov_size = false, Color3.new(1,1,1), false, 100
 	local indicator = cheat.IndicatorLibrary:new_indicator()
@@ -5935,8 +5948,8 @@ do
 		end}):Keybind({Name = "Aimbot", Mode = "Hold", Key = Enum.KeyCode.E, Value = false, Flag = "aimbot_enabled_keybind", Callback = function(bool)
 			aimbot_enabled_key = bool
 		end})
-		aimsec:Dropdown({Name = "Hitpart", Values = {"Head", "UpperTorso"}, Value = "Head", Flag = "aimbot_hitpart", Multi = false, Callback = function(str)
-			aimbot_part = str
+		aimsec:Dropdown({Name = "Hitpart", Values = {"Head","HumanoidRootPart","UpperTorso","LowerTorso","LeftUpperArm","LeftLowerArm","LeftHand","RightUpperArm","RightLowerArm","RightHand","LeftUpperLeg","LeftLowerLeg","LeftFoot","RightUpperLeg","RightLowerLeg","RightFoot"}, Value = {"Head"}, Flag = "aimbot_hitpart", Multi = true, Callback = function(tbl)
+			aimbot_part = tbl and #tbl > 0 and tbl or {"Head"}
 		end})
 		aimsec:Dropdown({Name = "Aim mode", Values = {"Camera", "Mouse", "Silent"}, Value = "Camera", Flag = "aimbot_mode", Multi = false, Callback = function(str)
 			aimbot_mode = str
@@ -6000,10 +6013,11 @@ do
 			if new_health >= old_health then
 				return
 			end
+			local partText = typeof(aimbot_part) == "table" and table.concat(aimbot_part, ", ") or tostring(aimbot_part)
 			Library.Notification(string.format(
 				"Hit %s in the %s for %s damage (%s health remaining)", 
 				Utility.RichText(player.Name, Library.Theme.accent), 
-				Utility.RichText(aimbot_part, Library.Theme.accent), 
+				Utility.RichText(partText, Library.Theme.accent), 
 				Utility.RichText(tostring(math.floor(old_health - new_health)), Library.Theme.accent), 
 				Utility.RichText(tostring(math.floor(new_health)), Library.Theme.accent)
 				), hit_logs_duration)
@@ -6035,9 +6049,11 @@ do
 		end})
 		chksec:Toggle({Name = "Wallbang", Value = false, Flag = "silent_wallbang", Callback = function(bool)
 			silent_wallbang = bool
+			if bool then silent_methods["Raycast"] = true end
 		end})
 		chksec:Toggle({Name = "Magic bullet (UNSTABLE)", Value = false, Flag = "silent_magicbullet", Callback = function(bool)
 			silent_magicbullet = bool
+			if bool then silent_methods["Raycast"] = true end
 		end})
 	end
 
@@ -6051,8 +6067,22 @@ do
 		Thickness = 1,
 		ZIndex = 2
 	})
+	local last_aim_scan = 0
 
 	cheat.utility.new_heartbeat(LPH_NO_VIRTUALIZE(function()
+		-- throttle + dead check to prevent fps drop after respawn/death
+		if aimbot_enabled then
+			if tick() - last_aim_scan < 0.07 then return end
+			last_aim_scan = tick()
+			local lchar = LocalPlayer.Character
+			local lhum = lchar and _FindFirstChildOfClass(lchar, "Humanoid")
+			if not lchar or not lhum or lhum.Health <= 0 then
+				target_part, target_player, target_collider = nil, nil, nil
+				silent_cached_hitpos, silent_cached_hitpart, silent_cached_orgpos = nil, nil, nil
+				indicator.text = ""
+				return
+			end
+		end
 		local indtxt = ""
 		if aimbot_enabled then
 			local viewportsize = Camera.ViewportSize
@@ -6070,9 +6100,26 @@ do
 
 			if target_part and target_collider then
 				indtxt = target_player.Name
+				-- cache hitpos once per heartbeat for silent (avoid per-raycast alloc + jitter)
+				local hitsize = target_part.Size
+				local orgpos = target_part.Position
+				silent_cached_orgpos = orgpos
+				silent_cached_hitpart = target_part
+				silent_cached_hitpos = orgpos + _Vector3new(
+					(mathrandom() - mathrandom()) * (hitsize.X / 14),
+					(mathrandom() - mathrandom()) * (hitsize.Y / 14),
+					(mathrandom() - mathrandom()) * (hitsize.Z / 14)
+				)
+			else
+				silent_cached_hitpos, silent_cached_hitpart, silent_cached_orgpos = nil, nil, nil
 			end
+			-- cache local pos for raycast filter (prevent tp + save fps)
+			local char = LocalPlayer.Character
+			local hrp = char and _FindFirstChild(char, "HumanoidRootPart")
+			silent_cached_localPos = hrp and hrp.Position or Camera.CFrame.Position
 		else
 			target_part, target_player, target_collider = nil, nil, nil
+			silent_cached_hitpos, silent_cached_hitpart, silent_cached_orgpos, silent_cached_localPos = nil, nil, nil, nil
 		end
 
 		indicator.text = indtxt
@@ -6090,13 +6137,22 @@ do
 		CircleOutline.Visible = (fov_show and fov_outline)
 		if aimbot_enabled and aimbot_enabled_key and target_part and target_collider then
 			local new_pos = target_part.Position
+			-- sync aspect ratio: compensate so target stays centered after aspect scale
+			if aspect_ratio then
+				local camPos = Camera.CFrame.Position
+				local dir = new_pos - camPos
+				dir = _Vector3new(dir.X / math.max(aspect_ratio_x, 0.01), dir.Y / math.max(aspect_ratio_y, 0.01), dir.Z)
+				new_pos = camPos + dir
+			end
 			if aimbot_mode == "Mouse" then
 				local pos = _WorldToViewportPoint(Camera, new_pos)
-				local mpos = UserInputService:GetMouseLocation()
-				mousemoverel(math.round((pos.X - mpos.X) * aimbot_smoothness), math.round((pos.Y - mpos.Y) * aimbot_smoothness))
+				local mpos2 = UserInputService:GetMouseLocation()
+				mousemoverel(math.round((pos.X - mpos2.X) * aimbot_smoothness), math.round((pos.Y - mpos2.Y) * aimbot_smoothness))
 			end
 			if aimbot_mode == "Camera" then
-				Camera.CFrame = Camera.CFrame:Lerp(CFrame.lookAt(Camera.CFrame.Position, new_pos), aimbot_smoothness)
+				-- smooth lerp synced with aspect, use delta-independent factor
+				local alpha = math.clamp(aimbot_smoothness, 0.01, 1)
+				Camera.CFrame = Camera.CFrame:Lerp(CFrame.lookAt(Camera.CFrame.Position, new_pos), alpha)
 			end
 		end
 	end))
@@ -6225,11 +6281,12 @@ do
 		end))
 	end
 	do
-		setsec:Dropdown({Name = "Checks", Values = {"Team check", "Dead check", "Distance check"}, Value = {}, Flag = "esp_checks", Multi = true, Callback = function(tbl)
+		setsec:Dropdown({Name = "Checks", Values = {"Team check", "Dead check", "Distance check", "Self check"}, Value = {}, Flag = "esp_checks", Multi = true, Callback = function(tbl)
 			local funny = {
 				["Team check"] = "team_check",
 				["Dead check"] = "dead_check",
-				["Distance check"] = "dist_check"
+				["Distance check"] = "dist_check",
+				["Self check"] = "self_check"
 			}
 			for flag_text, esp_var in funny do
 				enemy_main_sets[esp_var] = false
@@ -7336,12 +7393,15 @@ local __newindex; __newindex = hookmetamethod(game, "__newindex", newcclosure(LP
 			val = val + (val.LookVector * -thirdperson_distance)
 		end
 		if aspect_ratio then
-			val = val * _CFramenew(
+			-- sync: keep position, scale only rotation axes so aim stays centered
+			local pos = val.Position
+			local rot = val.Rotation
+			val = _CFramenew(pos) * (rot * _CFramenew(
 				0, 0, 0,
 				aspect_ratio_x, 0, 0,
 				0, aspect_ratio_y, 0,
 				0, 0, 1
-			)
+			))
 		end;
 	end
 	return __newindex(self, idx, val)
@@ -7366,67 +7426,89 @@ end)))
 
 local __namecall; __namecall = hookmetamethod(game, "__namecall", newcclosure(LPH_NO_VIRTUALIZE(function(self,...)
 	if checkcaller() then return __namecall(self, ...) end
+	-- fast path: only when silent+aim held and target exists (prevents 24/7 hijack = fps drop)
+	if aimbot_mode ~= "Silent" or not aimbot_enabled or not aimbot_enabled_key or not silent_cached_hitpos or not silent_cached_hitpart then
+		return __namecall(self, ...)
+	end
 	local args = {...}
 	local method = getnamecallmethod()
-	if silent_methods[method] and aimbot_mode == "Silent" then
-		local hitpart = target_part
-		local traceback = debugtraceback()
-		if not (hitpart --[[and (global_vars.stack_check == "" or traceback and traceback:find(global_vars.stack_check))]]) then
+	if not silent_methods[method] then
+		return __namecall(self, ...)
+	end
+	local hitpart = silent_cached_hitpart
+	local hitpos = silent_cached_hitpos
+	local orgpos = silent_cached_orgpos
+	if not hitpart or not hitpart.Parent then
+		return __namecall(self, ...)
+	end
+
+	if method == "Raycast" then
+		local origin = args[1]
+		local direction = args[2]
+		if not origin or not direction then return __namecall(self, ...) end
+		local mag = direction.Magnitude
+		if mag < 5 or mag > 5000 then
 			return __namecall(self, ...)
 		end
-		print(traceback)
-
-		local hitsize = hitpart.Size
-		local orgpos = hitpart.Position
-		local hitpos = orgpos + _Vector3new(
-			(mathrandom() - mathrandom()) * (hitsize.X / 10),
-			(mathrandom() - mathrandom()) * (hitsize.Y / 10),
-			(mathrandom() - mathrandom()) * (hitsize.Z / 10)
-		)
-
-		if method == "Raycast" then
-			local origin = args[1]
-			local direction = args[2]
-			local new_dir = silent_projectionoverride and (hitpos - origin) or (hitpos - origin).Unit * direction.Magnitude
-			if silent_wallbang and new_dir.Magnitude >= direction.Magnitude then
-				return {
-					Instance = hitpart,
-					Position = silent_magicbullet and _Vector3new(0/0, 0/0, 0/0) or hitpos,
-					Distance = (hitpos - args[1]).Magnitude,
-					Normal = (hitpos - orgpos).Unit,
-					Material = hitpart.Material
-				}
-			end
-			args[2] = new_dir
-			return __namecall(self, unpack(args))
+		local camPos = Camera.CFrame.Position
+		local localPos = silent_cached_localPos or camPos
+		if (origin - camPos).Magnitude > 120 and (origin - localPos).Magnitude > 120 then
+			return __namecall(self, ...)
 		end
-
-		if method == "ScreenPointToRay" or method == "ViewportPointToRay" then
-			local ray = __namecall(self, unpack(args))
-			local origin = ray.Origin
-			local direction = ray.Direction
-			local new_dir = silent_projectionoverride and (hitpos - origin) or (hitpos - origin).Unit * direction.Magnitude
-			if silent_wallbang and new_dir.Magnitude >= direction.Magnitude then
-				local new_origin = (hitpart.CFrame * CFrame.new(0, hitpart.Size.Y, 0)).Position
-				return Ray.new(
-					(hitpart.CFrame * CFrame.new(0, hitpart.Size.Y, 0)).Position,
-					hitpos - new_origin
-				)
-			end
-			return Ray.new(origin, new_dir)
+		if (hitpos - origin).Magnitude > 2500 then
+			return __namecall(self, ...)
 		end
-
-		local ray = args[1]
-		local origin = ray.Origin
-		local direction = ray.Direction
-		local new_dir = silent_projectionoverride and (hitpos - origin) or (hitpos - origin).Unit * direction.Magnitude
-		if silent_wallbang and new_dir.Magnitude >= direction.Magnitude then
-			return hitpart, silent_magicbullet and _Vector3new(0/0, 0/0, 0/0) or hitpos, (hitpos - orgpos).Unit, hitpart.Material
+		if silent_wallbang or silent_magicbullet then
+			local res = silent_cached_rayResult
+			res.Instance = hitpart
+			res.Position = hitpos
+			res.Distance = (hitpos - origin).Magnitude
+			res.Normal = (hitpos - orgpos).Unit
+			res.Material = hitpart.Material
+			return res
 		end
-		args[1] = Ray.new(origin, new_dir)
+		local new_dir = silent_projectionoverride and (hitpos - origin) or (hitpos - origin).Unit * mag
+		args[2] = new_dir
 		return __namecall(self, unpack(args))
 	end
-	return __namecall(self, ...)
+
+	if method == "ScreenPointToRay" or method == "ViewportPointToRay" then
+		local ray = __namecall(self, unpack(args))
+		if not ray then return __namecall(self, ...) end
+		local origin = ray.Origin
+		local direction = ray.Direction
+		if silent_wallbang or silent_magicbullet then
+			return Ray.new(origin, hitpos - origin)
+		end
+		local mag = direction.Magnitude
+		local new_dir = silent_projectionoverride and (hitpos - origin) or (hitpos - origin).Unit * mag
+		return Ray.new(origin, new_dir)
+	end
+
+	-- FindPartOnRay variants
+	local ray = args[1]
+	if typeof(ray) ~= "Ray" then
+		return __namecall(self, ...)
+	end
+	local origin = ray.Origin
+	local direction = ray.Direction
+	local mag = direction.Magnitude
+	if mag < 5 or mag > 5000 then
+		return __namecall(self, ...)
+	end
+	local camPos2 = Camera.CFrame.Position
+	if (origin - camPos2).Magnitude > 150 then
+		return __namecall(self, ...)
+	end
+	if (hitpos - origin).Magnitude > 2500 then
+		return __namecall(self, ...)
+	end
+	if silent_wallbang or silent_magicbullet then
+		return hitpart, hitpos, (hitpos - orgpos).Unit, hitpart.Material
+	end
+	local new_dir = silent_projectionoverride and (hitpos - origin) or (hitpos - origin).Unit * mag
+	args[1] = Ray.new(origin, new_dir)
+	return __namecall(self, unpack(args))
 end)))
 
 cheat.EspLibrary.load()
