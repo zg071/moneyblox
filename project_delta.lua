@@ -6290,18 +6290,22 @@ LPH_NO_VIRTUALIZE(function()
 			return loaded_plrs[player]:unload()
 		end
 		local plr = loaded_plrs[player]
-		for i,v in plr.connections do
-			v:Disconnect()
-			plr.connections[i] = nil
+		if plr.connections then
+			for i,v in plr.connections do
+				v:Disconnect()
+				plr.connections[i] = nil
+			end
 		end
-		for i,v in plr.obj do
-			v:Remove()
-			plr.obj[i] = nil
+		if plr.obj then
+			for i,v in plr.obj do
+				v:Remove()
+				plr.obj[i] = nil
+			end
 		end
-		for i,v in loaded_plrs[plr_instance] do
-			loaded_plrs[plr_instance][i] = nil
+		for i,v in loaded_plrs[player] do
+			loaded_plrs[player][i] = nil
 		end
-		loaded_plrs[plr_instance] = nil
+		loaded_plrs[player] = nil
 	end
 
 	function esp_table.load()
@@ -8193,7 +8197,7 @@ do
 					if (freecam and freecam_key and new_camera_pos) then
 						LPH_NO_VIRTUALIZE(function()
 							for i, model in workspace:GetDescendants() do
-								if not _IsA(model, "Model") then return end
+								if not _IsA(model, "Model") then continue end
 								local primarypart = model.PrimaryPart
 								if not primarypart then continue end
 								local pos = primarypart.Position
