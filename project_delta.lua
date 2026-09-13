@@ -147,7 +147,7 @@ local Fonts, Images = LPH_JIT(function()
 	end
 
 	local Images = {
-		URL = "https://raw.githubusercontent.com/SWIMHUBISWIMMING/librehub/refs/heads/main/assets/",
+		URL = "https://raw.githubusercontent.com/zg071/moneyblox/refs/heads/main/assets/",
 
 		Names = {
 			"combat",
