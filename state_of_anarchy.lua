@@ -6554,6 +6554,7 @@ do
 	local speedhack, speedhack_key, speedhack_speed = false, false, 100
 	local flyhack, flyhack_key, flyhack_speed, flyhack_speed_y = false, false, 100, 100
 	local bunnyhop = false
+	local noclip, noclip_key = false, false
 
 	
 
@@ -6743,6 +6744,19 @@ do
 		flyhack_speed_y = int
 	end})
 
+	movebox:Toggle({Name = "Noclip", Value = false, Flag = "noclip", Callback = function(bool)
+		noclip = bool
+		if not bool and LocalPlayer.Character then
+			for _, part in LocalPlayer.Character:GetDescendants() do
+				if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
+					part.CanCollide = true
+				end
+			end
+		end
+	end}):Keybind({Name = "Noclip", Mode = "Toggle", Key = Enum.KeyCode.C, Value = false, Flag = "noclip_key", Callback = function(bool)
+		noclip_key = bool
+	end})
+
 	cheat.utility.new_renderstepped(LPH_NO_VIRTUALIZE(function(delta)
 		local hrp = LocalPlayer.Character and _FindFirstChild(LocalPlayer.Character, "HumanoidRootPart")
 		local hum = LocalPlayer.Character and _FindFirstChildOfClass(LocalPlayer.Character, "Humanoid")
@@ -6751,6 +6765,13 @@ do
 			hum.Jump = true
 		end
 		if not hrp then return end
+		if noclip and noclip_key and LocalPlayer.Character then
+			for _, part in LocalPlayer.Character:GetDescendants() do
+				if part:IsA("BasePart") then
+					part.CanCollide = false
+				end
+			end
+		end
 
 		local cameralook = (_Vector3new(1, 0, 1) * Camera.CFrame.LookVector).Unit
 		local direction = Vector3.zero
