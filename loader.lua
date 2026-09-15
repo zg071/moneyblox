@@ -39,12 +39,16 @@ Instance.new("UICorner", button).CornerRadius = UDim.new(0, 5)
 
 button.MouseButton1Click:Connect(function()
     if setclipboard then
-        setclipboard("discord.gg/YMyHNx2rqZ")
+        setclipboard("discord.com/invite/4FXEsTyqvc")
     end
 
     gui:Destroy()
 
-    if placeId == 7336302630 or (game.CreatorType == Enum.CreatorType.Group and creatorId == 3765739) then
+    local isGroup = game.CreatorType == Enum.CreatorType.Group
+
+    if isGroup and creatorId == 3810537 then
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/zg071/moneyblox/refs/heads/main/state_of_anarchy.lua"))()
+    elseif placeId == 7336302630 or (isGroup and creatorId == 3765739) then
         loadstring(game:HttpGet("https://raw.githubusercontent.com/zg071/moneyblox/refs/heads/main/project_delta.lua"))()
     else
         loadstring(game:HttpGet("https://raw.githubusercontent.com/zg071/moneyblox/refs/heads/main/universal.lua"))()
