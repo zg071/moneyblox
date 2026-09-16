@@ -5689,7 +5689,7 @@ ui.sections = {
 	custom_desync = ui.subtabs.misc_exploit:Section({Name = "Custom desync", Side = "Left"}),
 	exploit = ui.subtabs.misc_exploit:Section({Name = "Exploit", Side = "Right"}),
 	perks = ui.subtabs.misc_perks:Section({Name = "Perks", Side = "Left"}),
-	antiaim = ui.subtabs.misc_antiaim:Section({Name = "R15 Antiaim (visual)", Side = "Left"}),
+	antiaim = ui.subtabs.misc_antiaim:Section({Name = "Antiaim", Side = "Left"}),
 	antiaim_set = ui.subtabs.misc_antiaim:Section({Name = "Settings", Side = "Right"}),
 	anim = ui.subtabs.misc_anim:Section({Name = "Animation Player", Side = "Left"}),
 
@@ -6628,37 +6628,6 @@ do
 						if obj then obj.Visible = true end
 					end
 				end
-			end)
-		end))
-	end
-
-	
-	do
-		local aa_enabled, aa_yaw, aa_pitch, aa_roll, aa_spin, aa_spinspeed = false, 0, 0, 0, false, 5
-		local aa_sec = ui.sections.antiaim
-		local aa_set = ui.sections.antiaim_set
-		aa_sec:Toggle({Name = "Enabled", Value = false, Flag = "antiaim_enabled", Callback = function(b) aa_enabled = b end})
-		aa_set:Slider({Name = "Yaw", Min = -180, Max = 180, Float = 1, Value = 0, Flag = "antiaim_yaw", Callback = function(v) aa_yaw = v end})
-		aa_set:Slider({Name = "Pitch", Min = -30, Max = 30, Float = 1, Value = 0, Flag = "antiaim_pitch", Callback = function(v) aa_pitch = v end})
-		aa_set:Slider({Name = "Roll", Min = -30, Max = 30, Float = 1, Value = 0, Flag = "antiaim_roll", Callback = function(v) aa_roll = v end})
-		aa_set:Toggle({Name = "Spin", Value = false, Flag = "antiaim_spin", Callback = function(b) aa_spin = b end})
-		aa_set:Slider({Name = "Spin speed", Min = 0, Max = 20, Float = 0.5, Value = 5, Flag = "antiaim_spinspeed", Callback = function(v) aa_spinspeed = v end})
-		local spin = 0
-		cheat.utility.new_renderstepped(LPH_NO_VIRTUALIZE(function(delta)
-			if not aa_enabled then return end
-			local char = LocalPlayer.Character
-			if not char then return end
-			local hum = char:FindFirstChildOfClass("Humanoid")
-			if not hum or hum.RigType ~= Enum.HumanoidRigType.R15 then return end
-			local lower = char:FindFirstChild("LowerTorso")
-			local hrp = char:FindFirstChild("HumanoidRootPart")
-			if not lower or not hrp then return end
-			local waist = lower:FindFirstChild("Waist")
-			if not waist then return end
-			if aa_spin then spin = (spin + delta * aa_spinspeed * 40) % 360 end
-			local y = aa_yaw + (aa_spin and spin or 0)
-			pcall(function()
-				waist.C0 = CFrame.new(waist.C0.Position) * CFrame.Angles(math.rad(aa_pitch), math.rad(y), math.rad(aa_roll))
 			end)
 		end))
 	end
