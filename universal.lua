@@ -4836,7 +4836,8 @@ LPH_NO_VIRTUALIZE(function()
 
 				chams = false,
 				chams_color = { Color3.new(1, 1, 1), 0 },
-				chams_glow_factor = 2
+				chams_glow_factor = 2,
+				chams_visible_only = false
 			}
 		}
 	}
@@ -5293,6 +5294,7 @@ LPH_NO_VIRTUALIZE(function()
 		plr.connections["character_removing"] = plr_instance.CharacterRemoving:Connect(character_removing)
 
 		local last_esp_update = 0
+		local last_chams_check = 0
 		plr.connections["render"] = cheat.utility.new_renderstepped(function(delta)
 			if tick() - last_esp_update < 0.04 then return end
 			last_esp_update = tick()
@@ -5365,6 +5367,28 @@ LPH_NO_VIRTUALIZE(function()
 			end
 
 			plr:togglevis(true)
+			-- visible only chams
+			if settings.chams then
+				if settings.chams_visible_only then
+					if tick() - last_chams_check > 0.12 then
+						last_chams_check = tick()
+						local params = RaycastParams.new()
+						params.FilterType = Enum.RaycastFilterType.Blacklist
+						params.FilterDescendantsInstances = {LocalPlayer.Character, character}
+						params.IgnoreWater = true
+						local camPos = Camera.CFrame.Position
+						for p, d in chams_table do
+							if not p or not p.Parent then continue end
+							local res = _Raycast(workspace, camPos, p.Position - camPos, params)
+							d.cham.Adornee = (not res or (res.Instance and res.Instance:IsDescendantOf(character))) and p or nil
+						end
+					end
+				else
+					for p, d in chams_table do
+						if d.cham.Adornee ~= p then d.cham.Adornee = p end
+					end
+				end
+			end
 
 			do
 				main_holder.Rotation = holder_spin and tick() * holder_speed % 360 or 0
@@ -5940,6 +5964,9 @@ do
 	aimbot_mode = "Camera"
 	local aimbot_team_check, aimbot_dead_check, aimbot_dist_check, aimbot_max_distance = false, false, false, 600
 	local fov_show, fov_color, fov_outline, fov_size = false, Color3.new(1,1,1), false, 100
+	local prediction, prediction_ms = false, 120
+	local triggerbot, triggerbot_key, triggerbot_ms = false, false, 150
+	local trigger_acquired = 0
 	local indicator = cheat.IndicatorLibrary:new_indicator()
 
 	do
@@ -5956,6 +5983,22 @@ do
 		end})
 		aimsec:Slider({Name = "Aim smoothness", Min = 0.01, Max = 1, Float = 0.01, Value = 0.7, Flag = "aimbot_smoothness", Suffix = "%s\194\176" --[[degree symbol (°)]], Callback = function(int)
 			aimbot_smoothness = int
+		end})
+		aimsec:Toggle({Name = "Prediction", Value = false, Flag = "aimbot_prediction", Callback = function(bool)
+			prediction = bool
+		end})
+		aimsec:Slider({Name = "Prediction time", Min = 0, Max = 1000, Float = 5, Value = 120, Flag = "aimbot_prediction_ms", Suffix = "%sms", Callback = function(int)
+			prediction_ms = int
+		end})
+		aimsec:Toggle({Name = "Triggerbot", Value = false, Flag = "triggerbot", Callback = function(bool)
+			triggerbot = bool
+			if not bool then trigger_acquired = 0 end
+		end}):Keybind({Name = "Triggerbot", Mode = "Hold", Key = Enum.KeyCode.T, Value = false, Flag = "triggerbot_key", Callback = function(bool)
+			triggerbot_key = bool
+			if not bool then trigger_acquired = 0 end
+		end})
+		aimsec:Slider({Name = "Reaction time", Min = 0, Max = 1000, Float = 5, Value = 150, Flag = "triggerbot_ms", Suffix = "%sms", Callback = function(int)
+			triggerbot_ms = int
 		end})
 	end
 	do
@@ -6068,6 +6111,12 @@ do
 		ZIndex = 2
 	})
 	local last_aim_scan = 0
+	local function apply_prediction(pos, part)
+		if prediction and part then
+			return pos + part.Velocity * (prediction_ms / 1000)
+		end
+		return pos
+	end
 
 	cheat.utility.new_heartbeat(LPH_NO_VIRTUALIZE(function()
 		-- throttle + dead check to prevent fps drop after respawn/death
@@ -6105,11 +6154,11 @@ do
 				local orgpos = target_part.Position
 				silent_cached_orgpos = orgpos
 				silent_cached_hitpart = target_part
-				silent_cached_hitpos = orgpos + _Vector3new(
+				silent_cached_hitpos = apply_prediction(orgpos + _Vector3new(
 					(mathrandom() - mathrandom()) * (hitsize.X / 14),
 					(mathrandom() - mathrandom()) * (hitsize.Y / 14),
 					(mathrandom() - mathrandom()) * (hitsize.Z / 14)
-				)
+				), target_part)
 			else
 				silent_cached_hitpos, silent_cached_hitpart, silent_cached_orgpos = nil, nil, nil
 			end
@@ -6136,7 +6185,7 @@ do
 		CircleOutline.Radius = new_fov_size
 		CircleOutline.Visible = (fov_show and fov_outline)
 		if aimbot_enabled and aimbot_enabled_key and target_part and target_collider then
-			local new_pos = target_part.Position
+			local new_pos = apply_prediction(target_part.Position, target_part)
 			-- sync aspect ratio: compensate so target stays centered after aspect scale
 			if aspect_ratio then
 				local camPos = Camera.CFrame.Position
@@ -6154,6 +6203,46 @@ do
 				local alpha = math.clamp(aimbot_smoothness, 0.01, 1)
 				Camera.CFrame = Camera.CFrame:Lerp(CFrame.lookAt(Camera.CFrame.Position, new_pos), alpha)
 			end
+		end
+		if triggerbot and triggerbot_key then
+			local valid = false
+			local char = LocalPlayer.Character
+			if char then
+				local m = UserInputService:GetMouseLocation()
+				local ray = Camera:ScreenPointToRay(m.X, m.Y)
+				local params = RaycastParams.new()
+				params.FilterType = Enum.RaycastFilterType.Blacklist
+				params.FilterDescendantsInstances = {char, Camera}
+				params.IgnoreWater = true
+				local res = workspace:Raycast(ray.Origin, ray.Direction * 5000, params)
+				if res and res.Instance then
+					local model = res.Instance:FindFirstAncestorOfClass("Model")
+					local plr = model and Players:GetPlayerFromCharacter(model)
+					if plr and plr ~= LocalPlayer then
+						local ok_team = (not aimbot_team_check) or (not get_team(plr))
+						local hum = model:FindFirstChildOfClass("Humanoid")
+						local hp = hum and get_health(plr, model, hum) or nil
+						local ok_dead = (not aimbot_dead_check) or (hp == nil) or (hp > 0)
+						local ok_dist = (not aimbot_dist_check) or ((Camera.CFrame.Position - res.Position).Magnitude <= aimbot_max_distance)
+						valid = ok_team and ok_dead and ok_dist
+					end
+				end
+			end
+			if valid then
+				if trigger_acquired == 0 then trigger_acquired = tick() end
+				if (tick() - trigger_acquired) * 1000 >= triggerbot_ms then
+					pcall(function() mouse1click() end)
+					pcall(function()
+						local vim = game:GetService("VirtualInputManager")
+						vim:SendMouseButtonEvent(0, 0, 0, true, game, 0)
+						vim:SendMouseButtonEvent(0, 0, 0, false, game, 0)
+					end)
+				end
+			else
+				trigger_acquired = 0
+			end
+		else
+			trigger_acquired = 0
 		end
 	end))
 end
@@ -6234,6 +6323,10 @@ do
 
 		espsec:Toggle({Name = "Chams", Value = false, Flag = "esp_chams", Callback = function(bool)
 			enemy_sets.chams = bool
+			cheat.EspLibrary.icaca()
+		end})
+		espsec:Toggle({Name = "Visible only", Value = false, Flag = "esp_chams_visible_only", Callback = function(bool)
+			enemy_sets.chams_visible_only = bool
 			cheat.EspLibrary.icaca()
 		end})
 		espsec:Colorpicker({Name = "Chams color", Value = Color3.new(1, 1, 1), Usealpha = false, Flag = "esp_chams_color", Callback = function(color)
