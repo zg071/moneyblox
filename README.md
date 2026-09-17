@@ -4,7 +4,7 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/zg071/moneyblox/refs/
 ```
 
 # Credits
-swimdroid (s._wm) - Make this script. </br>
+swimdroid (swim.d) - Make this script. </br>
 office (ox_y) - Providing the UI. </br>
 furra (zg07) - Updating this script.
 
