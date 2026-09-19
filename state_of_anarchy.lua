@@ -6638,12 +6638,12 @@ do
 		local fe_aa_sec = ui.sections.antiaim
 		local fe_aa_set = ui.sections.antiaim_set
 		
-		fe_aa_sec:Toggle({Name = "FE Enabled", Value = false, Flag = "fe_antiaim_enabled", Callback = function(b) fe_aa_enabled = b end})
-		fe_aa_set:Slider({Name = "FE Yaw", Min = -180, Max = 180, Float = 1, Value = 0, Flag = "fe_antiaim_yaw", Callback = function(v) fe_yaw = v end})
-		fe_aa_set:Slider({Name = "FE Pitch", Min = -30, Max = 30, Float = 1, Value = 0, Flag = "fe_antiaim_pitch", Callback = function(v) fe_pitch = v end})
-		fe_aa_set:Slider({Name = "FE Roll", Min = -30, Max = 30, Float = 1, Value = 0, Flag = "fe_antiaim_roll", Callback = function(v) fe_roll = v end})
-		fe_aa_set:Toggle({Name = "FE Spin", Value = false, Flag = "fe_antiaim_spin", Callback = function(b) fe_spin = b end})
-		fe_aa_set:Slider({Name = "FE Spin speed", Min = 0, Max = 20, Float = 0.5, Value = 5, Flag = "fe_antiaim_spinspeed", Callback = function(v) fe_spinspeed = v end})
+		fe_aa_sec:Toggle({Name = "Enabled", Value = false, Flag = "fe_antiaim_enabled", Callback = function(b) fe_aa_enabled = b end})
+		fe_aa_set:Slider({Name = "Yaw", Min = -180, Max = 180, Float = 1, Value = 0, Flag = "fe_antiaim_yaw", Callback = function(v) fe_yaw = v end})
+		fe_aa_set:Slider({Name = "Pitch", Min = -30, Max = 30, Float = 1, Value = 0, Flag = "fe_antiaim_pitch", Callback = function(v) fe_pitch = v end})
+		fe_aa_set:Slider({Name = "Roll", Min = -30, Max = 30, Float = 1, Value = 0, Flag = "fe_antiaim_roll", Callback = function(v) fe_roll = v end})
+		fe_aa_set:Toggle({Name = "Spin", Value = false, Flag = "fe_antiaim_spin", Callback = function(b) fe_spin = b end})
+		fe_aa_set:Slider({Name = "Spin speed", Min = 0, Max = 20, Float = 0.5, Value = 5, Flag = "fe_antiaim_spinspeed", Callback = function(v) fe_spinspeed = v end})
 		local fe_spin_angle = 0
 		cheat.utility.new_renderstepped(LPH_NO_VIRTUALIZE(function(delta)
 			if not fe_aa_enabled then return end
