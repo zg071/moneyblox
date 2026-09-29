@@ -13,3 +13,5 @@ https://swimhub.rrr945268.workers.dev/
 
 # Original github repository
 https://github.com/SWIMHUBISWIMMING/librehub
+
+[![Reviewed on ScriptBlox](https://scriptblox.com/badge/Universal-Script-moneyblox-227825)](https://scriptblox.com/script/Universal-Script-moneyblox-227825)
