@@ -39,7 +39,7 @@ Instance.new("UICorner", button).CornerRadius = UDim.new(0, 5)
 
 button.MouseButton1Click:Connect(function()
     if setclipboard then
-        setclipboard("discord.com/invite/4FXEsTyqvc")
+        setclipboard("discord.com/invite/YMyHNx2rqZ")
     end
 
     gui:Destroy()
