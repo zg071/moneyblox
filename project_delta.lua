@@ -8473,7 +8473,7 @@ do
 		
 		mscsec:Textbox({
 			Name = "Avatar UserId",
-			Value = "80254",
+			Value = "5019585244",
 			Flag = "view_avatar_userid",
 			Callback = function()
 				task.spawn(change_avatar)
