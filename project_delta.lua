@@ -2,6 +2,7 @@
 --!optimize 2
 
 
+
 -- FABRICATED VALUES!!!
 -- ^^^ this line is official 2 years old
 
@@ -43,6 +44,18 @@ end;
 
 if (getgenv and getgenv() or _G).Library then
 	(getgenv and getgenv() or _G).Library.Unload()
+end
+
+do
+	local is_loaded = false
+	pcall(function()
+		is_loaded = game:IsLoaded()
+	end)
+	if not is_loaded then
+		pcall(function()
+			game.Loaded:Wait()
+		end)
+	end
 end
 
 local Folder = "moneyblox"
@@ -103,7 +116,7 @@ local Fonts, Images = LPH_JIT(function()
 						writefile(TTF, base64_decode(data))
 					else
 						return
-					end			
+					end
 				end
 
 				if not isfile(JSON) then
@@ -147,7 +160,7 @@ local Fonts, Images = LPH_JIT(function()
 	end
 
 	local Images = {
-		URL = "https://raw.githubusercontent.com/zg071/moneyblox/refs/heads/main/assets/",
+		URL = "https://raw.githubusercontent.com/SWIMHUBISWIMMING/librehub/refs/heads/main/assets/",
 
 		Names = {
 			"combat",
@@ -204,7 +217,7 @@ local Library, Utility = LPH_JIT(function()
 	local Camera = workspace.CurrentCamera
 
 	local Env = RunService:IsStudio() and _G or getgenv()
-	local HiddenUI = RunService:IsStudio() and game.Players.LocalPlayer.PlayerGui --[[or gethui and gethui()]] or game:GetService("CoreGui")
+	local HiddenUI = RunService:IsStudio() and game.Players.LocalPlayer.PlayerGui  or game:GetService("CoreGui")
 	local Converts = {
 		[0] = "0",
 		"1",
@@ -321,8 +334,8 @@ local Library, Utility = LPH_JIT(function()
 
 				if props then
 					for prop, val in props do
-						--if prop ~= "Color" and prop:lower():find("color") then continue end
-						--if prop == "FontFace" then Obj.Font = val continue end
+
+
 
 						Obj[prop] = val
 					end
@@ -367,7 +380,7 @@ local Library, Utility = LPH_JIT(function()
 				return math.floor(number * Mult + 0.5) / Mult
 			end
 
-			-- taken from dev forums.
+
 			function Utility.PositionOver(position, object, addedy)
 				addedy = addedy or 0
 
@@ -399,9 +412,9 @@ local Library, Utility = LPH_JIT(function()
 				c = c or 1 / 8
 
 				local offset = math.abs(b - a)
-				if (offset < c) then 
-					return b 
-				end 
+				if (offset < c) then
+					return b
+				end
 
 				return a + (b - a) * c
 			end
@@ -886,7 +899,7 @@ local Library, Utility = LPH_JIT(function()
 		local KeybindList = Library.CreateList()
 		Library.KeybindsList = KeybindList
 
-		-- Element
+
 
 		function Library.ColorpickerWindow(self)
 			local Popup = {
@@ -1133,9 +1146,9 @@ local Library, Utility = LPH_JIT(function()
 				Library.Button({
 					holder = Objects.buttonline,
 				}, {Name = "Paste", Callback = function()
-					if not Library.CopiedColor then 
+					if not Library.CopiedColor then
 						Library.Notification("Please copy a color first.", 5)
-						return 
+						return
 					end
 
 					Popup.Set(Library.CopiedColor, Popup.Alpha, false)
@@ -1721,7 +1734,7 @@ local Library, Utility = LPH_JIT(function()
 					TextSize = Library.FontSize,
 					BackgroundColor3 = Color3.fromRGB(25, 25, 25),
 					Parent = Objects.holder,
-				}, { TextColor3 = "text" })  
+				}, { TextColor3 = "text" })
 
 				Objects.page = Utility.New("Frame", {
 					Name = "page",
@@ -2264,7 +2277,7 @@ local Library, Utility = LPH_JIT(function()
 					PaddingRight = UDim.new(0, 1),
 					PaddingLeft = UDim.new(0, 1),
 					Parent = Objects.background,
-				})  
+				})
 			end
 
 			function Slider.Set(value)
@@ -2485,7 +2498,7 @@ local Library, Utility = LPH_JIT(function()
 						Button.StartConfirmation()
 					end
 				else
-					cfg.callback()	
+					cfg.callback()
 
 					Library.ChangeObjectTheme(Objects.text, {
 						TextColor3 = "text"
@@ -2722,7 +2735,7 @@ local Library, Utility = LPH_JIT(function()
 				})
 			end
 
-			-- Change Pos
+
 			Utility.Signal(Objects.inline:GetPropertyChangedSignal("AbsolutePosition"):Connect(function()
 				if Dropdown.Visible then
 					local Size = Objects.inline.AbsoluteSize
@@ -2738,7 +2751,7 @@ local Library, Utility = LPH_JIT(function()
 					Dropdown.Open(false)
 				end
 			end))
-			--
+
 
 			function Dropdown.Display()
 				local Value = Dropdown.Value
@@ -2831,7 +2844,7 @@ local Library, Utility = LPH_JIT(function()
 
 			function Dropdown.Set(value, ignore)
 				if cfg.multi then
-					if type(value) == "table" then -- probably means config/values is loading...
+					if type(value) == "table" then
 						for _,item in Dropdown.Items do
 							item.Select(false)
 						end
@@ -3244,7 +3257,7 @@ local Library, Utility = LPH_JIT(function()
 
 			function List.Set(value)
 				if cfg.multi then
-					if type(value) == "table" then -- probably means config/values is loading...
+					if type(value) == "table" then
 						for _,item in List.Items do
 							item.Select(false)
 						end
@@ -3517,7 +3530,7 @@ local Library, Utility = LPH_JIT(function()
 					TextSize = Library.FontSize,
 					BackgroundColor3 = Color3.fromRGB(255, 255, 255),
 					Parent = Objects.background,
-				}, { TextColor3 = "dark text" })			 
+				}, { TextColor3 = "dark text" })
 			end
 
 			function Textbox.Set(value)
@@ -4067,42 +4080,42 @@ local Library, Utility = LPH_JIT(function()
 
 			function Keybind.Set(value, ignore)
 				if type(value) == "table" then
-					for _,v in value do 
+					for _,v in value do
 						Keybind.Set(v, true)
 					end
 
-					return 
+					return
 				end
 
 				local Type = typeof(value)
 				if Type == "EnumItem" then
-					Keybind.Key = value 
+					Keybind.Key = value
 
 					value = ( value == Enum.KeyCode.Unknown and "-" or value.Name )
 
 					Objects.value.Text = string.format("[%s]", KeyConverters[ value:lower() ] or value)
 				elseif Type == "boolean" then
-					-- state 
+
 					if Keybind.Mode == "Always on" and not value then
-						value = true 
-					end 
+						value = true
+					end
 
-					Keybind.Value = value 
+					Keybind.Value = value
 				elseif Type == "string" then
-					-- method
-					if Keybind.OnHold and value ~= "Hold" then 
-						Keybind.OnHold:Disconnect( )
-						Keybind.OnHold = nil 
-					end 
 
-					Keybind.Mode = value 
+					if Keybind.OnHold and value ~= "Hold" then
+						Keybind.OnHold:Disconnect( )
+						Keybind.OnHold = nil
+					end
+
+					Keybind.Mode = value
 
 					Popup.SetMode(value)
 
 					if value == "Always on" then
-						Keybind.Value = true 
-					end	
-				end 
+						Keybind.Value = true
+					end
+				end
 
 				if Item then
 					Item.Set(Keybind.Value, cfg.name, Keybind.Mode or "Toggle")
@@ -4167,9 +4180,9 @@ local Library, Utility = LPH_JIT(function()
 			end
 
 			Utility.Signal(Objects.value.MouseButton1Click:Connect(function(input)
-				if Keybind.Listener then 
+				if Keybind.Listener then
 					Keybind.Listener:Disconnect( )
-					Keybind.Listener = nil 
+					Keybind.Listener = nil
 
 					return
 				end
@@ -4182,8 +4195,8 @@ local Library, Utility = LPH_JIT(function()
 
 				task.wait( 1/50 )
 
-				Keybind.Listener = Utility.Signal(UserInputService.InputBegan:Connect(function(input) 
-					if input.KeyCode == Enum.KeyCode.Escape or input.KeyCode == Enum.KeyCode.Backspace then 
+				Keybind.Listener = Utility.Signal(UserInputService.InputBegan:Connect(function(input)
+					if input.KeyCode == Enum.KeyCode.Escape or input.KeyCode == Enum.KeyCode.Backspace then
 						Keybind.Set( Enum.KeyCode.Unknown )
 
 						Library.ChangeObjectTheme(Objects.value, {
@@ -4196,7 +4209,7 @@ local Library, Utility = LPH_JIT(function()
 						return
 					end
 
-					if input.UserInputType == Enum.UserInputType.Keyboard or table.find({ Enum.UserInputType.MouseButton1, Enum.UserInputType.MouseButton2, Enum.UserInputType.MouseButton3 }, input.UserInputType ) then 
+					if input.UserInputType == Enum.UserInputType.Keyboard or table.find({ Enum.UserInputType.MouseButton1, Enum.UserInputType.MouseButton2, Enum.UserInputType.MouseButton3 }, input.UserInputType ) then
 						local Key = input.KeyCode ~= Enum.KeyCode.Unknown and input.KeyCode or input.UserInputType or Enum.KeyCode.Unknown
 
 						Keybind.Set( Key )
@@ -4215,28 +4228,28 @@ local Library, Utility = LPH_JIT(function()
 				Keybind.Open(not Keybind.Visible)
 			end))
 
-			Utility.Signal(UserInputService.InputBegan:Connect(function(input) 
-				if input.KeyCode == Keybind.Key or input.UserInputType == Keybind.Key then 
+			Utility.Signal(UserInputService.InputBegan:Connect(function(input)
+				if input.KeyCode == Keybind.Key or input.UserInputType == Keybind.Key then
 					local Value = Keybind.Mode ~= "Toggle" or not Keybind.Value
 					Keybind.Set( Value )
 
-					if Keybind.Mode == "Hold" then 
-						if Keybind.OnHold then 
-							Keybind.OnHold:Disconnect( ) 
+					if Keybind.Mode == "Hold" then
+						if Keybind.OnHold then
+							Keybind.OnHold:Disconnect( )
 						end
 
-						Keybind.OnHold = Utility.Signal(UserInputService.InputEnded:Connect(function(input) 
-							if input.KeyCode == Keybind.Key or input.UserInputType == Keybind.Key then 
+						Keybind.OnHold = Utility.Signal(UserInputService.InputEnded:Connect(function(input)
+							if input.KeyCode == Keybind.Key or input.UserInputType == Keybind.Key then
 								Keybind.Set( false )
 
-								if Keybind.OnHold then 
+								if Keybind.OnHold then
 									Keybind.OnHold:Disconnect( )
 									Keybind.OnHold = nil
 								end
 							end
 						end))
-						-- elseif keybind.method == "single" then 
-						--	 keybind.set( false )
+
+
 					end
 				end
 			end))
@@ -4262,7 +4275,7 @@ local Library, Utility = LPH_JIT(function()
 			end
 
 			Keybind.Set({ cfg.key, cfg.mode, cfg.value }, true)
-			-- Library.ConfigFlags[cfg.flag] = Keybind.Set
+
 			Library.ConfigFlags[string.format("%s_data", cfg.flag)] = Keybind.Set
 
 			table.insert(Library.Popups, Keybind)
@@ -4525,7 +4538,7 @@ local Library, Utility = LPH_JIT(function()
 					BorderSizePixel = 0,
 					BackgroundColor3 = Color3.fromRGB(220, 100, 100),
 					Parent = Objects.background,
-				}, { BackgroundColor3 = "accent" })	
+				}, { BackgroundColor3 = "accent" })
 			end
 
 			task.spawn(function()
@@ -4563,7 +4576,7 @@ local Library, Utility = LPH_JIT(function()
 
 		Library.ColorpickerWindow = Library.ColorpickerWindow()
 
-		--
+
 
 		function Library.GetConfig()
 			local Config = { }
@@ -4686,7 +4699,7 @@ local PicturesOnKill = LPH_JIT(function()
 			end
 
 			local Picture = PicturesOnKill.Data[current_image_index]
-			
+
 			current_image_index += 1
 
 			if current_image_index > max_image_index then
@@ -4712,7 +4725,7 @@ local PicturesOnKill = LPH_JIT(function()
 
 		PicturesOnKill.Reload()
 	end
-	
+
 	return PicturesOnKill
 end)();
 
@@ -4818,7 +4831,7 @@ end
 local project_delta = {
 	fps_object = nil,
 	fps_hooks = {},
-	fps_module = require(game:GetService("ReplicatedStorage").Modules.FPS),
+	fps_module = require(game:GetService("ReplicatedStorage"):WaitForChild("Modules"):WaitForChild("FPS")),
 	universaltable_module = require(game:GetService("ReplicatedStorage").Modules:WaitForChild("UniversalTables")),
 	reload_remote = game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Reload"),
 	equip_remote = game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Equip"),
@@ -4876,14 +4889,14 @@ for i, v in getgc(true) do
 			project_delta.fps_usetypes = v
 		end
 		if rawget(v, "loadByHand") and type(rawget(v, "magazine")) == "function" then
-			--[[print("got reload")
-			table.foreach(v, print)]]
+
+
 			project_delta.fps_reloadtypes = v
 		end
 	end
 end
 
--- from desync section
+
 local desync_enabled, desync_enabled_key = false, false
 local old_cframe, old_velocity, replicated_hrp_cframe, forced_cframe
 
@@ -4949,7 +4962,7 @@ do
 	project_delta.get_current_magazine = LPH_NO_VIRTUALIZE(function(gun)
 		return findfirstchildofslottype(gun, "Magazine")
 	end)
-	
+
 
 	project_delta.calculate_speed = LPH_NO_VIRTUALIZE(function(hrp)
 		local external_mod = hrp:GetAttribute("MovementModifier")
@@ -5029,23 +5042,23 @@ do
 		end
 		return mags, ammo
 	end)
-	
+
 	local wallpen_params = RaycastParams.new()
 	wallpen_params.FilterType = Enum.RaycastFilterType.Include
 	wallpen_params.IgnoreWater = true
 	wallpen_params.CollisionGroup = "WeaponRay"
-	
+
 	local material_ballistics = project_delta.universaltable_module.UniversalTable.MaterialBallistics
 	local global_ignorelist_proj = project_delta.universaltable_module.UniversalTable.GlobalIgnoreListProjectile
-	
+
 	project_delta.calculate_penetration = LPH_NO_VIRTUALIZE(function(hit_part, hit_position, direction_vector, penetration_power)
 		if hit_part:GetAttribute("NoPen") then return 0 end
-		
+
 		wallpen_params.FilterDescendantsInstances = { hit_part }
 
 		local backwards_ray_origin = hit_position + direction_vector * 5
 		local reverse_direction = -direction_vector
-			
+
 		local exit_ray_result = _Raycast(workspace, backwards_ray_origin, reverse_direction * 5, wallpen_params)
 
 		if not exit_ray_result then return 0 end
@@ -5078,25 +5091,25 @@ do
 		weapon_params.FilterDescendantsInstances = { character, Camera, global_ignorelist_proj }
 
 		local penetration_power, muzzle_velocity = bullet_stats:GetAttribute("ArmorPen"), bullet_stats:GetAttribute("MuzzleVelocity")
-		
+
 		local direction = (target_position - origin).Unit * muzzle_velocity * 1/120
 		while true do
 			local raycast_result = _Raycast(workspace, origin, direction, weapon_params)
-			
+
 			if not raycast_result then
-				origin += direction 
+				origin += direction
 				continue
 			end
 
 			local hit_instance, hit_pos = raycast_result.Instance, raycast_result.Position
-			
+
 			if _IsDescendantOf(hit_instance, target_character) and hitboxes[hit_instance.Name] then
 				return true
 			end
 
 			local pen_rem, pen_pos = calculate_penetration(hit_instance, hit_pos, direction, penetration_power)
 			penetration_power = pen_rem
-			
+
 			if penetration_power <= 0 then
 				return false
 			end
@@ -5230,7 +5243,7 @@ end
 
 
 if setfflag then
-	setfflag("AdornShadingAPI", "true") -- glowy chamsy
+	setfflag("AdornShadingAPI", "true")
 end
 
 LPH_NO_VIRTUALIZE(function()
@@ -5256,9 +5269,9 @@ LPH_NO_VIRTUALIZE(function()
 					max_distance = 1000,
 					skeleton_rate = 1e-10,
 					gradient_spin = false,
-					gradient_speed = 360, -- degrees per second, formula: tick() % 1 * speed
+					gradient_speed = 360,
 					holder_spin = false,
-					holder_speed = 360 -- degrees per second, formula: tick() % 1 * speed
+					holder_speed = 360
 				},
 
 				enabled = false,
@@ -5287,7 +5300,8 @@ LPH_NO_VIRTUALIZE(function()
 
 				chams = false,
 				chams_color = { Color3.new(1, 1, 1), 0 },
-				chams_glow_factor = 2
+				chams_glow_factor = 2,
+				chams_visible_only = false
 			},
 			item = {
 				main_settings = {
@@ -5422,9 +5436,9 @@ LPH_NO_VIRTUALIZE(function()
 			connections = {}
 		}
 
-		--[[for required, _ in next, skeleton_order do
-			loaded_plrs[plr_instance].obj["skeleton_" .. required] = esp.create_obj("Line", { Visible = false, Thickness = 1 })
-		end]]
+
+
+
 
 		local flags_table = {}
 		local chams_table = {}
@@ -5663,14 +5677,14 @@ LPH_NO_VIRTUALIZE(function()
 			AdornCullingMode = Enum.AdornCullingMode.Automatic
 		}, obj)
 
-		--main_wireframe.Adornee = root
+
 
 		local settings = esp_table.settings.enemy
 		local main_settings = settings.main_settings
 
 		local character, humanoid, head, root
 
-		-- god forgive me
+
 		local team_check, dead_check, dist_check, npc_check = main_settings.team_check, main_settings.dead_check, main_settings.dist_check, main_settings.npc_check
 		local skeleton_rate = main_settings.skeleton_rate <= 0 and 1e-10 or main_settings.skeleton_rate
 		local max_distance, update_skeleton = main_settings.max_distance, settings.skeleton
@@ -5682,6 +5696,7 @@ LPH_NO_VIRTUALIZE(function()
 		local get_team, get_gun = esp_table.get_team, esp_table.get_gun
 
 		local setvis_cache, skeleton_tick = false, 0
+		local cham_vis_ok = true
 
 		function plr:forceupdate()
 			team_check, dead_check, dist_check, npc_check = main_settings.team_check, main_settings.dead_check, main_settings.dist_check, main_settings.npc_check
@@ -5741,7 +5756,7 @@ LPH_NO_VIRTUALIZE(function()
 			end
 
 			for part, cham in chams_table do
-				cham.cham.Adornee = setvis_cache and settings.chams and part or nil
+				cham.cham.Adornee = setvis_cache and settings.chams and (not settings.chams_visible_only or cham_vis_ok) and part or nil
 				cham.cham.Color3 = Color3.new(
 					settings.chams_color[1].R * settings.chams_glow_factor,
 					settings.chams_color[1].G * settings.chams_glow_factor,
@@ -5752,7 +5767,7 @@ LPH_NO_VIRTUALIZE(function()
 
 		local destroy_cham_object = function(part)
 			if not chams_table[part] then
-				return --print("???????", part)
+				return
 			end
 			chams_table[part].connection:Disconnect()
 			chams_table[part].cham:Destroy()
@@ -5762,11 +5777,11 @@ LPH_NO_VIRTUALIZE(function()
 		local create_cham_object = function(part)
 			if not (_IsA(part, "BasePart") and isBodyPart(part.Name)) then return end
 			if chams_table[part] then destroy_cham_object(part) end
-			--print("hi", part)
+
 			local cham = esp.create_obj("BoxHandleAdornment", {
 				Parent = container,
 				Size = part.Size * .95,
-				Adornee = setvis_cache and settings.chams and part or nil,
+				Adornee = setvis_cache and settings.chams and (not settings.chams_visible_only or cham_vis_ok) and part or nil,
 				Color3 = Color3.new(
 					settings.chams_color[1].R * settings.chams_glow_factor,
 					settings.chams_color[1].G * settings.chams_glow_factor,
@@ -5795,7 +5810,7 @@ LPH_NO_VIRTUALIZE(function()
 
 			main_holder.Visible = bool
 			for part, cham in chams_table do
-				cham.cham.Adornee = bool and settings.chams and part or nil
+				cham.cham.Adornee = bool and settings.chams and (not settings.chams_visible_only or cham_vis_ok) and part or nil
 			end
 		end
 
@@ -5910,6 +5925,15 @@ LPH_NO_VIRTUALIZE(function()
 
 			plr:togglevis(true)
 
+			cham_vis_ok = true
+			if settings.chams and settings.chams_visible_only and not is_npc then
+				local po = cheat.player_list and cheat.player_list[plr_instance]
+				cham_vis_ok = po and po.visible or false
+				for part, cham in chams_table do
+					cham.cham.Adornee = cham_vis_ok and part or nil
+				end
+			end
+
 			do
 				main_holder.Rotation = holder_spin and current_tick * holder_speed % 360 or 0
 				main_box_color.Rotation = box_rotation + (gradient_spin and current_tick * gradient_speed % 360 or 0)
@@ -5944,7 +5968,7 @@ LPH_NO_VIRTUALIZE(function()
 				local flag = flags_table[i]
 				if not show_flag then
 					flag.Visible = false
-					continue	
+					continue
 				end
 				flag.Visible = true
 				if flag_text then flag.Text = flag_text end
@@ -5958,7 +5982,7 @@ LPH_NO_VIRTUALIZE(function()
 				local points = table.create(15 * 2)
 				local counter = 0
 
-				for part_name, info in cache do 
+				for part_name, info in cache do
 					local parent_part = skeleton_order[part_name]
 					local parent_info = parent_part and cache[parent_part]
 					if not (parent_info) then
@@ -5980,12 +6004,12 @@ LPH_NO_VIRTUALIZE(function()
 		plr:forceupdate()
 	end
 	create_object_esp = function(model)
-		--[[if _FindFirstChildOfClass(model, "Humanoid") then
-			return model.Name.."'s corpse", _FindFirstChild(model, "UpperTorso")
-		end
-		if _FindFirstChildOfClass(model, "ObjectValue") then
-			
-		end]]
+
+
+
+
+
+
 		local s = tick()
 		while task.wait() and (tick() - s < 1) do
 			if _FindFirstChildOfClass(model, "Humanoid") then
@@ -6038,7 +6062,7 @@ LPH_NO_VIRTUALIZE(function()
 		}, obj)
 
 
-		--main_wireframe.Adornee = root
+
 
 		local settings = esp_table.settings.corpse
 		local main_settings = settings.main_settings
@@ -6046,7 +6070,7 @@ LPH_NO_VIRTUALIZE(function()
 		local main_part = _FindFirstChild(object, "UpperTorso")
 		local corpse_name = object.Name
 
-		-- god has forgiven me
+
 		local dist_check, max_distance = main_settings.dist_check, main_settings.max_distance
 		local distance_enabled = settings.distance
 
@@ -6184,7 +6208,7 @@ LPH_NO_VIRTUALIZE(function()
 		})
 
 
-		--main_wireframe.Adornee = root
+
 
 		local settings = esp_table.settings.item
 		local main_settings = settings.main_settings
@@ -6192,7 +6216,7 @@ LPH_NO_VIRTUALIZE(function()
 		local main_part, main_value = object.PrimaryPart, _FindFirstChildOfClass(object, "ObjectValue")
 		local item_name = object.Name
 
-		-- god has forgiven me
+
 		local dist_check, max_distance = main_settings.dist_check, main_settings.max_distance
 		local distance_enabled, amount_enabled, durability_enabled = settings.distance, settings.amount, settings.durability
 		local durability_bar_enabled = settings.durability_bar
@@ -6408,7 +6432,7 @@ LPH_NO_VIRTUALIZE(function()
 			offset_y = 0,
 
 			blink = false,
-			blink_speed = 1, -- transparency revolution/second [[ 0 -> 1 -> 0 ]]
+			blink_speed = 1,
 			blink_cycle = false,
 
 			text = "",
@@ -6420,7 +6444,7 @@ LPH_NO_VIRTUALIZE(function()
 
 		indicatorlib.indicators[indicator] = indicator
 
-		return indicator 
+		return indicator
 	end
 
 
@@ -6512,7 +6536,7 @@ end
 cheat.make_beam = function(Origin, Position, Color)
 	local part1, part2 = Instance.new("Part", workspace.NoCollision), Instance.new("Part", workspace.NoCollision)
 	part1.CFrame = _CFramenew(Origin);
-	part2.CFrame = _CFramenew(Origin); -- Position
+	part2.CFrame = _CFramenew(Origin);
 	part1.Transparency = 1; part2.Transparency = 1;
 	part1.CanCollide = false; part2.CanCollide = false;
 	part1.Size = Vector3.zero; part2.Size = Vector3.zero;
@@ -6529,7 +6553,7 @@ cheat.make_beam = function(Origin, Position, Color)
 	Beam.LightInfluence = 9e9
 	Beam.TextureMode = Enum.TextureMode.Static
 	Beam.TextureSpeed = 0
-	--Beam.Texture = "http://www.roblox.com/asset/?id=446111271"
+
 	Beam.Transparency = NumberSequence.new(0)
 	Beam.Attachment0 = OriginAttachment
 	Beam.Attachment1 = PositionAttachment
@@ -6568,7 +6592,7 @@ do
 	local report_list = game:GetService("ReplicatedStorage").ReportList
 	local most_wanted = report_list.MostWanted
 	local recent_reports = report_list.Recent
-	
+
 	local player_report_list = cheat.report_list
 	task.spawn(LPH_NO_VIRTUALIZE(function()
 		while task.wait(0.25) do
@@ -6579,7 +6603,7 @@ do
 			for i, v in recent_reports:GetChildren() do
 				local username, report_id = v.Name:match("(.+)_([^_]+)$")
 				local player_object = player_report_list[username]
-				
+
 				if not player_object then
 					player_report_list[username] = {rr = 0, mw = 0}
 					player_object = player_report_list[username]
@@ -6590,7 +6614,7 @@ do
 			for i, v in most_wanted:GetChildren() do
 				local username, user_id = v.Name:match("(.+)_([^_]+)$")
 				local player_object = player_report_list[username]
-				
+
 				if not player_object then
 					player_report_list[username] = {rr = 0, mw = 0}
 					player_object = player_report_list[username]
@@ -6739,7 +6763,7 @@ ui.subtabs = {
 ui.sections = {
 	aimbot_main = ui.subtabs.combat_aimbot:Section({Name = "Aimbot", Side = "Left"}),
 	aimbot_misc = ui.subtabs.combat_aimbot:Section({Name = "Misc", Side = "Right"}),
-	--aimbot_silent = ui.subtabs.combat_aimbot:Section({Name = "Silent", Side = "Right"}),
+
 	aimbot_effects = ui.subtabs.combat_misc:Section({Name = "Effects/Logs", Side = "Left"}),
 	gunmods = ui.subtabs.combat_misc:Section({Name = "Gun mods", Side = "Right"}),
 
@@ -6765,7 +6789,7 @@ ui.sections = {
 	theme_colors = ui.subtabs.settings_theme:Section({Name = "Colors", Side = "Right"})
 }
 
-do -- grr
+do
 	ui.tabs.combat.Set(true)
 
 	ui.subtabs.combat_aimbot.Set(true)
@@ -6773,6 +6797,8 @@ do -- grr
 	ui.subtabs.misc_main.Set(true)
 	ui.subtabs.settings_main.Set(true)
 end
+
+local hit_chances = {Head = 100, UpperTorso = 100}
 
 local get_targets_in_fov = LPH_NO_VIRTUALIZE(function(
 	fov_size,
@@ -6800,10 +6826,8 @@ local get_targets_in_fov = LPH_NO_VIRTUALIZE(function(
 		local character = player.Character
 		local root = character and _FindFirstChild(character, "HumanoidRootPart")
 		local humanoid = character and _FindFirstChildOfClass(character, "Humanoid")
-		local aimpart = character and _FindFirstChild(character, aimbot_part or "Head")
-		local mainpart = aimpart or root
 
-		if not (mainpart) then continue end
+		if not (root) then continue end
 
 		if (aimbot_team_check) and get_team(player) then
 			continue
@@ -6811,6 +6835,33 @@ local get_targets_in_fov = LPH_NO_VIRTUALIZE(function(
 		if (aimbot_dead_check) and (not humanoid or humanoid.Health <= 0) then
 			continue
 		end
+
+		local parts = (typeof(aimbot_part) == "table" and #aimbot_part > 0) and aimbot_part or {"Head"}
+
+
+
+		local total_w = 0
+		for _, pn in ipairs(parts) do
+			total_w = total_w + (hit_chances[pn] or 0)
+		end
+		local pick = parts[1]
+		if total_w > 0 then
+			local roll = math.random() * total_w
+			local acc = 0
+			for _, pn in ipairs(parts) do
+				acc = acc + (hit_chances[pn] or 0)
+				if roll <= acc then
+					pick = pn
+					break
+				end
+			end
+		end
+
+		local aimpart = character and _FindFirstChild(character, pick)
+		local mainpart = aimpart or root
+
+		if not (mainpart) then continue end
+
 		if (aimbot_dist_check) and ((campos - mainpart.Position).Magnitude > aimbot_max_distance) then
 			continue
 		end
@@ -6838,7 +6889,8 @@ local get_targets_in_fov = LPH_NO_VIRTUALIZE(function(
 		for _, npc in aizone:GetChildren() do
 			local root = _FindFirstChild(npc, "HumanoidRootPart")
 			local humanoid = _FindFirstChildOfClass(npc, "Humanoid")
-			local aimpart = _FindFirstChild(npc, aimbot_part or "Head")
+			local npc_parts = (typeof(aimbot_part) == "table" and #aimbot_part > 0) and aimbot_part or {"Head"}
+			local aimpart = _FindFirstChild(npc, npc_parts[1] or "Head")
 			local mainpart = aimpart or root
 
 			if not (mainpart) then continue end
@@ -6862,7 +6914,7 @@ local get_targets_in_fov = LPH_NO_VIRTUALIZE(function(
 			end
 		end
 	end
-	
+
 	table.sort(target_list, function(a, b)
 		return a[4] < b[4]
 	end)
@@ -6884,9 +6936,14 @@ do
 	local effsec = ui.sections.aimbot_effects
 	local gunsec = ui.sections.gunmods
 
-	local aimbot_enabled, aimbot_enabled_key, aimbot_part, aimbot_smoothness = false, false, "Head", 0.7
+	local aimbot_enabled, aimbot_enabled_key, aimbot_smoothness = false, false, 0.7
+	local aimbot_part = {"Head"}
+	local head_hitchance, torso_hitchance = 100, 100
+	local syncing_hitchance = false
+	local head_hitchance_slider, torso_hitchance_slider = nil, nil
 	local aimbot_team_check, aimbot_dead_check, aimbot_dist_check, aimbot_max_distance, aimbot_npc_check, aimbot_visible_check, aimbot_screen_check = false, false, false, 600, false, false, false
 	local fov_show, fov_color, fov_outline, fov_size, fov_sides = false, Color3.new(1,1,1), false, 100, 67
+	local snapline_show, snapline_color = false, Color3.new(1,1,1)
 	local autoshoot, autoshoot_key, autowall = false, false, false
 	local hitscan_hitboxes = {"FaceHitBox", "HeadTopHitBox", "Head"}
 
@@ -6901,16 +6958,55 @@ do
 			aimbot_enabled_key = aimbot_enabled and bool
 			aim_keybind.Set(aimbot_enabled_key, true)
 		end})
-		aimsec:Dropdown({Name = "Aim part", Values = {"Head", "UpperTorso"}, Value = "Head", Flag = "aimbot_hitpart", Multi = false, Callback = function(str)
-			aimbot_part = str
+		aimsec:Dropdown({Name = "Aim part", Values = {"Head", "UpperTorso"}, Value = {"Head"}, Flag = "aimbot_hitpart", Multi = true, Callback = function(tbl)
+			aimbot_part = (tbl and #tbl > 0) and tbl or {"Head"}
+			local multi = #aimbot_part > 1
+			if head_hitchance_slider then head_hitchance_slider.State(multi) end
+			if torso_hitchance_slider then torso_hitchance_slider.State(multi) end
+
+			local scan = {}
+			for _, p in ipairs(aimbot_part) do
+				if p == "Head" then
+					table.insert(scan, "FaceHitBox")
+					table.insert(scan, "HeadTopHitBox")
+					table.insert(scan, "Head")
+				elseif p == "UpperTorso" then
+					table.insert(scan, "UpperTorso")
+				end
+			end
+			if #scan > 0 then
+				hitscan_hitboxes = scan
+			end
 		end})
+		head_hitchance_slider = aimsec:Slider({Name = "Head hitchance", Min = 0, Max = 100, Float = 1, Value = 100, Flag = "aimbot_head_hitchance", suffix = "%s%%", Callback = function(int)
+			head_hitchance = int
+			hit_chances.Head = int
+
+			if not syncing_hitchance and torso_hitchance_slider and head_hitchance + torso_hitchance > 100 then
+				syncing_hitchance = true
+				torso_hitchance_slider.Set(100 - head_hitchance)
+				syncing_hitchance = false
+			end
+		end})
+		head_hitchance_slider.State(false)
+		torso_hitchance_slider = aimsec:Slider({Name = "Torso hitchance", Min = 0, Max = 100, Float = 1, Value = 0, Flag = "aimbot_torso_hitchance", suffix = "%s%%", Callback = function(int)
+			torso_hitchance = int
+			hit_chances.UpperTorso = int
+
+			if not syncing_hitchance and head_hitchance_slider and head_hitchance + torso_hitchance > 100 then
+				syncing_hitchance = true
+				head_hitchance_slider.Set(100 - torso_hitchance)
+				syncing_hitchance = false
+			end
+		end})
+		torso_hitchance_slider.State(false)
 		aimsec:Dropdown({Name = "Aim mode", Values = {"Camera", "Mouse", "Silent"}, Value = "Camera", Flag = "aimbot_mode", Multi = false, Callback = function(str)
 			aimbot_mode = str
 		end})
-		aimsec:Slider({Name = "Aim smoothness", Min = 0.01, Max = 1, Float = 0.01, Value = 0.7, Flag = "aimbot_smoothness", Suffix = "%sx" --[[degree symbol (°)]], Callback = function(int)
+		aimsec:Slider({Name = "Aim smoothness", Min = 0.01, Max = 1, Float = 0.01, Value = 0.7, Flag = "aimbot_smoothness", Suffix = "%sx" , Callback = function(int)
 			aimbot_smoothness = int
 		end})
-		
+
 
 		aimsec:Toggle({Name = "Desync resolver", Value = false, Flag = "desync_resolver", Callback = function(bool)
 			desync_resolver = bool
@@ -6965,14 +7061,14 @@ do
 		mscsec:Slider({Name = "Max distance", Min = 0, Max = 2000, Float = 10, Value = 200, Flag = "aimbot_max_distance", Callback = function(int)
 			aimbot_max_distance = int * 3
 		end})
-		mscsec:Slider({Name = "Aim size", Min = 0, Max = 180, Float = 1, Value = 10, Flag = "aimbot_fov_size", Suffix = "%s\194\176" --[[degree symbol (°)]], Callback = function(int)
+		mscsec:Slider({Name = "Aim size", Min = 0, Max = 180, Float = 1, Value = 10, Flag = "aimbot_fov_size", Suffix = "%s\194\176" , Callback = function(int)
 			fov_size = int
 		end})
 
 		mscsec:Toggle({Name = "Silent force-hit", Value = false, Flag = "silent_forcehit", Callback = function(bool)
 			silent_forcehit = bool
 		end})
-		
+
 
 		local autoshoot_keybind; autoshoot_keybind = mscsec:Toggle({Name = "Silent auto-shoot", Value = false, Flag = "aimbot_autoshoot", Callback = function(bool)
 			autoshoot = bool
@@ -7041,7 +7137,7 @@ do
 	end
 	do
 		local bullet_tracers, bullet_tracers_color = false, Color3.new(1, 1, 1)
-		--local hit_chams, hit_skeletons = false, false
+
 
 		effsec:Toggle({Name = "Aimbot FOV", Value = false, Flag = "fov_enabled", Callback = function(bool)
 			fov_show = bool
@@ -7053,6 +7149,11 @@ do
 		end})
 		effsec:Slider({Name = "FOV Sides", Min = 3, Max = 100, Float = 1, Value = 67, Flag = "fov_sides", Suffix = "%s", Callback = function(int)
 			fov_sides = int
+		end})
+		effsec:Toggle({Name = "Snapline", Value = false, Flag = "fov_snapline", Callback = function(bool)
+			snapline_show = bool
+		end}):Colorpicker({Name = "Snapline color", Value = Color3.new(1, 1, 1), Usealpha = false, Flag = "fov_snapline_color", Callback = function(color)
+			snapline_color = color.c
 		end})
 
 		do
@@ -7072,7 +7173,7 @@ do
 			inventory_text.BorderSizePixel = 0
 			inventory_text.Position = UDim2.new(0, 2, 0, 0)
 			inventory_text.FontFace = default_font
-			inventory_text.Text = ""--"xXx_sw1mdr0id_xXx's Inventory\n[Hotbar]\n\tMP5SD\n\tAKMN\n\tAKMN\n"
+			inventory_text.Text = ""
 			inventory_text.TextColor3 = Color3.new(1, 1, 1)
 			inventory_text.TextSize = 9
 			inventory_text.TextStrokeTransparency = 0
@@ -7108,7 +7209,7 @@ do
 			end})
 			effsec:Slider({Name = "Viewer Y", Min = 0, Max = 100, Float = 1, Value = 5, Flag = "inventory_viewer_y", Suffix = "%s%%", Callback = function(int)
 				inventory_holder.Position = UDim2.new(inventory_holder.Position.X.Scale, -GuiInset.X, int / 100, -GuiInset.Y)
-				--print(inventory_holder.Position)
+
 			end})
 
 			local player_list = cheat.player_list
@@ -7160,31 +7261,31 @@ do
 					return ""
 				end
 
-				--[[
-					weapon = { -- weapons
-						[1] = {"akmn", loadedammo (num), durability (num%)}
-						[2] = {"akmn", loadedammo (num), durability (num%)}
-						[3] = {"tfz0", loadedammo (num), durability (num%)}
-						[4] = {"dv2"}
-					}
-					armor = {
-						[1] = "atlyn"
-						[2] = "6b43"
-						[3] = "balaclava"
-						[4] = "kneepads"
-					}
-					inventoried = { -- inventoried things
-						{"attak5", {
-							["9x18AP"] = amount (num)
-							["7.62x39AP"] = amount (num)
-						}}
-					}
-					last = { -- uncategorized items
-						{"map"}
-					}
-				]]
 
-				--local indexed_inventories = {}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 				local weapon, armor, inventoried, last = {}, {}, {}, {}
 				for _, item in inventory:GetChildren() do
 					local item_name = item.Name
@@ -7261,24 +7362,24 @@ do
 					text_buffer ..= ("\t%*\n"):format(item[1])
 				end
 
-				--[[local text_buffer = ("%*'s Inventory\n"):format(player.Name)
 
-				for _, item in inventory:GetChildren() do
-					text_buffer ..= ("\t%*\n"):format(item.Name)
-					local item_inventory = _FindFirstChild(item, "Inventory")
-					local item_children = item_inventory and item_inventory:GetChildren()
-					if not (item_inventory and #item_children > 0) then continue end
 
-					for _, subitem in item_children do
-						local amount = subitem:GetAttribute("Amount")
 
-						if amount then
-							text_buffer ..= ("\t\t%* => %*x\n"):format(subitem.Name, amount)
-						else
-							text_buffer ..= ("\t\t%*\n"):format(subitem.Name)
-						end
-					end
-				end]]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 				return text_buffer:gsub("[\r\n]$", "")
 			end)
@@ -7305,7 +7406,7 @@ do
 		effsec:Slider({Name = "Hit sound speed", Min = 0.1, Max = 3, Float = 0.1, Value = 1, Flag = "hit_sound_speed", Suffix = "%s", Callback = function(int)
 			hit_sound_speed = int
 		end})
-		
+
 		effsec:Dropdown({Name = "Hit sound selection", Values = (function()
 			local hitsounds = {}
 			for name, _ in cheat.hitsounds do
@@ -7315,7 +7416,7 @@ do
 		end)(), Value = "Bameware", Flag = "hit_sound_id", Multi = false, Callback = function(str)
 			hit_sound_instance = cheat.hitsounds[str]
 		end})
-		
+
 		effsec:Toggle({Name = "Hit logs", Value = false, Flag = "hit_logs", Callback = function(bool)
 			hit_logs = bool
 		end})
@@ -7371,7 +7472,7 @@ do
 						imagelabel.Parent = PictureHolder
 
 						task.wait(picture_duration)
-					
+
 						local connection; connection = RunService.RenderStepped:Connect(function(d)
 							if imagelabel.BackgroundTransparency < 1 then
 								imagelabel.BackgroundTransparency += d * (1/fade_duration)
@@ -7389,7 +7490,7 @@ do
 		end
 
 		local make_beam = cheat.make_beam
-		local bullet_module = require(game:GetService("ReplicatedStorage"):WaitForChild("Modules").FPS.Bullet)
+		local bullet_module = require(game:GetService("ReplicatedStorage"):WaitForChild("Modules"):WaitForChild("FPS"):WaitForChild("Bullet"))
 		local old_createbullet = bullet_module.CreateBullet
 
 		local fake_part = Instance.new("Part")
@@ -7400,7 +7501,7 @@ do
 			local args = {...}
 			fake_part.CFrame = args[5].CFrame
 			args[5] = fake_part
-			
+
 			local origin = project_delta.get_estimated_origin(LocalPlayer)
 
 			if aimbot_mode == "Silent" and target_part then
@@ -7510,13 +7611,13 @@ do
 			if not success then
 				print("failed to hook remove_bullet", old_remove, getgenv().newlclosure)
 			else
-				
+
 				gunsec:Toggle({Name = "Auto reload", Value = false, Flag = "gunmods_auto_reload", Callback = function(bool)
 					auto_reload = bool
 				end})
-				--[[gunsec:Toggle({Name = "Auto refill magazines", Value = false, Flag = "gunmods_auto_refill", Callback = function(bool)
-					auto_refill = bool
-				end})]]
+
+
+
 			end
 		end
 
@@ -7545,7 +7646,7 @@ do
 			end
 
 
-			
+
 			equip_remote:FireServer()
 			task.defer(function()
 				local s = 0
@@ -7574,7 +7675,7 @@ do
 			end
 
 			local ammo, ammo_amount = get_compatible_ammo(fps_object, arg_ammo)
-			--print(ammo, ammo_amount, arg_ammo, arg_ammo and arg_ammo:GetAttribute("Amount"))
+
 			if not ammo then
 				return
 			end
@@ -7640,6 +7741,11 @@ do
 		Thickness = 1,
 		ZIndex = 2
 	})
+	local SnapLine = cheat.utility.new_drawing("Line", {
+		Visible = false,
+		Thickness = 1,
+		ZIndex = 2
+	})
 
 	local ammo_types = {}
 	for i, v in game:GetService("ReplicatedStorage").AmmoTypes:GetChildren() do
@@ -7678,7 +7784,7 @@ do
 			local hmm_origin = hrp and get_estimated_origin(LocalPlayer)
 
 			if not hmm_origin then continue end
-			
+
 			local picked_target = false
 
 			local fps_object = project_delta.fps_object
@@ -7701,13 +7807,22 @@ do
 			for _, target in target_list do
 				local aimpart, player, character, distance = unpack(target)
 
-				for _, hitbox in hitscan_hitboxes do
+
+				local scan = hitscan_hitboxes
+				local aname = aimpart.Name
+				if aname == "Head" or aname == "FaceHitBox" or aname == "HeadTopHitBox" then
+					scan = {"FaceHitBox", "HeadTopHitBox", "Head"}
+				elseif aname == "UpperTorso" then
+					scan = {"UpperTorso"}
+				end
+
+				for _, hitbox in scan do
 					local hitscan_part = _FindFirstChild(character, hitbox)
 					if not hitscan_part then continue end
-					
+
 					if autowall and bullet_stats then
 						if not target_wall_penetration(hmm_origin, character, hitscan_part, hitscan_part.Position, bullet_stats) then continue end
-						
+
 						target_part, target_player, target_character = hitscan_part, player, character
 						picked_target = true
 
@@ -7715,7 +7830,7 @@ do
 					end
 					local vis, res = is_visible(hmm_origin, character, hitscan_part)
 					if not (vis and valid_hitboxes[res.Instance.Name]) then continue end
-					
+
 					target_part, target_player, target_character = hitscan_part, player, character
 					picked_target = true
 
@@ -7726,11 +7841,11 @@ do
 					break
 				end
 			end
-			
+
 			if not picked_target then
 				continue
 			end
-			
+
 			local fps_object = project_delta.fps_object
 			local use_module_name = fps_object and fps_object.useModuleName
 			local use_func = use_module_name and fps_usetypes[use_module_name]
@@ -7759,6 +7874,24 @@ do
 			CircleInline.Visible = false
 			CircleOutline.Visible = false
 		end
+		if snapline_show and aimbot_enabled and (aimbot_mode == "Silent" or aimbot_enabled_key) and target_part and target_character then
+			local anchor_part = target_part
+			if typeof(aimbot_part) == "table" and #aimbot_part > 1 then
+				anchor_part = _FindFirstChild(target_character, "UpperTorso") or _FindFirstChild(target_character, "LowerTorso") or target_part
+			end
+			local pos, on_screen = _WorldToViewportPoint(Camera, anchor_part.Position)
+			if on_screen then
+				local viewportsize = Camera.ViewportSize
+				SnapLine.From = _Vector2new(viewportsize.X / 2, viewportsize.Y / 2)
+				SnapLine.To = _Vector2new(pos.X, pos.Y)
+				SnapLine.Color = snapline_color
+				SnapLine.Visible = true
+			else
+				SnapLine.Visible = false
+			end
+		else
+			SnapLine.Visible = false
+		end
 		if aimbot_enabled and aimbot_enabled_key and target_part and target_character then
 			local new_pos = target_part.Position
 			if aimbot_mode == "Mouse" then
@@ -7778,7 +7911,7 @@ local zoom, zoom_key, zoom_size = false, false, 10
 local aspect_ratio, aspect_ratio_x, aspect_ratio_y = false, 1, 1
 local thirdperson, thirdperson_key, thirdperson_distance = false, false, 10
 do
-	-- TODO: add fucking misc esp...
+
 	local espsec = ui.sections.player_esp
 	local setsec = ui.sections.esp_settings
 	local itmsec = ui.sections.item_esp
@@ -7796,15 +7929,19 @@ do
 	local corpse_main_sets = cheat.EspLibrary.settings.corpse.main_settings
 
 
-	do -- espsec
+	do
 		espsec:Toggle({Name = "Enabled", Value = false, Flag = "esp_enabled", Callback = function(bool)
 			enemy_sets.enabled = bool
 			cheat.EspLibrary.icaca()
 		end})
 
 		do
+			local rotation_slider = nil
+			local outline_toggle = nil
 			local toggle = espsec:Toggle({Name = "Box", Value = false, Flag = "esp_box", Callback = function(bool)
 				enemy_sets.box = bool
+				if rotation_slider then rotation_slider.State(bool) end
+				if outline_toggle then outline_toggle.State(bool) end
 				cheat.EspLibrary.icaca()
 			end})
 			toggle:Colorpicker({Name = "Box color left", Value = Color3.new(1, 1, 1), Usealpha = true, Flag = "esp_box_color_left", Callback = function(color)
@@ -7816,11 +7953,12 @@ do
 				enemy_sets.box_color[2] = color.c
 				cheat.EspLibrary.icaca()
 			end})
-			espsec:Slider({Name = "Box rotation", Min = 0, Max = 20, Float = 0.1, Value = 0, Flag = "esp_box_rotation", Callback = function(int)
+			rotation_slider = espsec:Slider({Name = "Box rotation", Min = 0, Max = 20, Float = 0.1, Value = 0, Flag = "esp_box_rotation", Callback = function(int)
 				enemy_sets.box_rotation = int * 18
 				cheat.EspLibrary.icaca()
 			end})
-			local outline_toggle = espsec:Toggle({Name = "Box outline", Value = false, Flag = "esp_box_outline", Callback = function(bool)
+			rotation_slider.State(false)
+			outline_toggle = espsec:Toggle({Name = "Box outline", Value = false, Flag = "esp_box_outline", Callback = function(bool)
 				enemy_sets.box_outline = bool
 				cheat.EspLibrary.icaca()
 			end})
@@ -7834,6 +7972,7 @@ do
 				enemy_sets.box_outline_color[4] = color.a
 				cheat.EspLibrary.icaca()
 			end})
+			outline_toggle.State(false)
 		end
 
 		do
@@ -7857,7 +7996,6 @@ do
 			{"Weapon", "weapon"},
 			{"Health text", "health_text"},
 			{"Flags", "flags"},
-			{"Skeleton", "skeleton"},
 			} do
 			espsec:Toggle({Name = element[1], Value = false, Flag = `esp_{element[2]}`, Callback = function(bool)
 				enemy_sets[element[2]] = bool
@@ -7868,25 +8006,45 @@ do
 			end})
 		end
 
-		espsec:Slider({Name = "Skeleton update rate", Min = 0, Max = 1, Float = 0.01, Value = 0, Flag = "esp_skeleton_rate", Callback = function(int)
+		local skeleton_rate_slider = nil
+		espsec:Toggle({Name = "Skeleton", Value = false, Flag = "esp_skeleton", Callback = function(bool)
+			enemy_sets.skeleton = bool
+			if skeleton_rate_slider then skeleton_rate_slider.State(bool) end
+			cheat.EspLibrary.icaca()
+		end}):Colorpicker({Name = "Skeleton color", Value = Color3.new(1, 1, 1), Usealpha = true, Flag = "esp_skeleton_color", Callback = function(color)
+			enemy_sets.skeleton_color = {color.c, color.a}
+			cheat.EspLibrary.icaca()
+		end})
+		skeleton_rate_slider = espsec:Slider({Name = "Skeleton update rate", Min = 0, Max = 1, Float = 0.01, Value = 0, Flag = "esp_skeleton_rate", Callback = function(int)
 			enemy_main_sets.skeleton_rate = int
 			cheat.EspLibrary.icaca()
 		end})
+		skeleton_rate_slider.State(false)
 
-		espsec:Toggle({Name = "Chams", Value = false, Flag = "esp_chams", Callback = function(bool)
+		local chams_visible_toggle = nil
+		local chams_glow_slider = nil
+		local toggle = espsec:Toggle({Name = "Chams", Value = false, Flag = "esp_chams", Callback = function(bool)
 			enemy_sets.chams = bool
+			if chams_visible_toggle then chams_visible_toggle.State(bool) end
+			if chams_glow_slider then chams_glow_slider.State(bool) end
 			cheat.EspLibrary.icaca()
 		end})
-		espsec:Colorpicker({Name = "Chams color", Value = Color3.new(1, 1, 1), Usealpha = false, Flag = "esp_chams_color", Callback = function(color)
+		toggle:Colorpicker({Name = "Chams color", Value = Color3.new(1, 1, 1), Usealpha = false, Flag = "esp_chams_color", Callback = function(color)
 			enemy_sets.chams_color = {color.c, color.a}
 			cheat.EspLibrary.icaca()
 		end})
-		espsec:Slider({Name = "Chams glow factor", Min = 0, Max = 100, Float = 0.1, Value = 3, Flag = "esp_chams_glow_factor", Callback = function(int)
+		chams_visible_toggle = espsec:Toggle({Name = "Visible Only", Value = false, Flag = "esp_chams_visible_only", Callback = function(bool)
+			enemy_sets.chams_visible_only = bool
+			cheat.EspLibrary.icaca()
+		end})
+		chams_visible_toggle.State(false)
+		chams_glow_slider = espsec:Slider({Name = "Chams glow factor", Min = 0, Max = 100, Float = 0.1, Value = 3, Flag = "esp_chams_glow_factor", Callback = function(int)
 			enemy_sets.chams_glow_factor = int
 			cheat.EspLibrary.icaca()
 		end})
+		chams_glow_slider.State(false)
 	end
-	do -- set sec (flags)
+	do
 		local player_list = cheat.player_list
 		local report_list = cheat.report_list
 		local flag_settings = {
@@ -7908,7 +8066,7 @@ do
 				flag_settings[flag] = true
 			end
 		end})
-		
+
 		local get_team = cheat.EspLibrary.get_team
 		cheat.EspLibrary.register_flag("TARGET", LPH_NO_VIRTUALIZE(function(player, character, humanoid)
 			return flag_settings["Target"] and player == target_player
@@ -7931,7 +8089,7 @@ do
 			return flag_settings["Desynced"] and server_position and hrp and (server_position - hrp.CFrame.Position).Magnitude > 3
 		end))
 		cheat.EspLibrary.register_flag("VIS", LPH_NO_VIRTUALIZE(function(player, character, humanoid)
-			local tp = player_list[player]	
+			local tp = player_list[player]
 			return flag_settings["Visible"] and tp and tp.visible
 		end))
 		cheat.EspLibrary.register_flag("NPC", LPH_NO_VIRTUALIZE(function(player, character, humanoid)
@@ -7957,7 +8115,7 @@ do
 			deaths = deaths and (deaths == 0 and 1 or deaths) or 1
 			return true, ("%.1f KD"):format(kills/deaths)
 		end))
-		
+
 		cheat.EspLibrary.register_flag("SUSSY", LPH_NO_VIRTUALIZE(function(player, character, humanoid)
 			if not flag_settings["Suspiciousness"] then
 				return false
@@ -7990,7 +8148,7 @@ do
 			return true, text
 		end))
 	end
-	do -- set sec (settings)
+	do
 		setsec:Dropdown({Name = "Checks", Values = {"Team check", "Dead check", "Distance check", "NPC check"}, Value = {}, Flag = "esp_checks", Multi = true, Callback = function(tbl)
 			local funny = {
 				["Team check"] = "team_check",
@@ -8001,13 +8159,13 @@ do
 			for flag_text, esp_var in funny do
 				enemy_main_sets[esp_var] = false
 			end
-			for flag_text, esp_var in funny do -- O^2 my beloved... its 3 elements so i don't really care (9)
+			for flag_text, esp_var in funny do
 				for _, check_name in tbl do
 					if (check_name ~= flag_text or enemy_main_sets[esp_var]) then
 						continue
 					end
 					enemy_main_sets[esp_var] = true
-					--print(esp_var)
+
 				end
 			end
 			cheat.EspLibrary.icaca()
@@ -8033,7 +8191,7 @@ do
 			cheat.EspLibrary.icaca()
 		end})
 	end
-	do -- itm sec
+	do
 		itmsec:Toggle({Name = "Item ESP", Value = false, Flag = "esp_item", Callback = function(bool)
 			item_sets.enabled = bool
 			cheat.EspLibrary.icaca()
@@ -8063,7 +8221,7 @@ do
 			cheat.EspLibrary.icaca()
 		end})
 	end
-	do -- oth sec
+	do
 		othsec:Toggle({Name = "Corpse ESP", Value = false, Flag = "esp_corpse", Callback = function(bool)
 			corpse_sets.enabled = bool
 			cheat.EspLibrary.icaca()
@@ -8120,7 +8278,7 @@ do
 		local vm = _FindFirstChildOfClass(Camera, "Model")
 		if not vm then return end
 		local viewmodel_item = _FindFirstChild(vm, "Item")
-		if gun_changer and viewmodel_item then -- gun
+		if gun_changer and viewmodel_item then
 			for _, v in viewmodel_item:GetDescendants() do
 				local surfaceappearance = _FindFirstChildOfClass(v, "SurfaceAppearance")
 				if _IsA(v, "BasePart") then
@@ -8154,7 +8312,7 @@ do
 		end
 	end)
 
-	do -- msc sec
+	do
 		local old_fov = Camera.FieldOfView
 		mscsec:Toggle({Name = "FOV Changer", Value = false, Flag = "view_fov_changer", Callback = function(bool)
 			fov_changer = bool
@@ -8176,7 +8334,7 @@ do
 			zoom_size = int
 			Camera.FieldOfView = (zoom and zoom_key and zoom_size) or (fov_changer and fov_changer_size) or old_fov
 		end})
-		
+
 		do
 			local freecam, freecam_key, freecam_speed = false, false, 750
 			local fc_keybind; fc_keybind = mscsec:Toggle({Name = "Freecam", Value = false, Flag = "view_freecam", Callback = function(bool)
@@ -8235,7 +8393,7 @@ do
 				direction = _IsKeyDown(UserInputService, Enum.KeyCode.A)         and direction + _Vector3new(cameralook.Z, 0, -cameralook.X) or direction;
 				direction = _IsKeyDown(UserInputService, Enum.KeyCode.Space)     and direction + Vector3.yAxis or direction;
 				direction = _IsKeyDown(UserInputService, Enum.KeyCode.LeftControl) and direction - Vector3.yAxis or direction;
-				
+
 				if direction.Magnitude > 0 then direction = direction.Unit end
 				new_camera_pos += direction * delta * (_IsKeyDown(UserInputService, Enum.KeyCode.LeftShift) and freecam_speed / 10 or freecam_speed)
 				Camera.CFrame = CFrame.new(new_camera_pos) * Camera.CFrame.Rotation
@@ -8244,7 +8402,7 @@ do
 				end
 			end))
 		end
-		
+
 		local tp_keybind; tp_keybind = mscsec:Toggle({Name = "Thirdperson", Value = false, Flag = "view_thirdperson", Callback = function(bool)
 			thirdperson = bool
 		end}):Keybind({Name = "Thirdperson", Mode = "Toggle", Key = Enum.KeyCode.N, Value = false, Flag = "view_thirdperson_keybind", Callback = function(bool)
@@ -8259,7 +8417,7 @@ do
 		mscsec:Slider({Name = "Thirdperson distance", Min = 0, Max = 15, Float = 0.1, Value = 5, Flag = "view_thirdperson_distance", Callback = function(int)
 			thirdperson_distance = int
 		end})
-		
+
 		mscsec:Toggle({Name = "Aspect ratio", Value = false, Flag = "view_aspect_ratio", Callback = function(bool)
 			aspect_ratio = bool
 		end})
@@ -8269,114 +8427,114 @@ do
 		mscsec:Slider({Name = "Aspect Y", Min = 0.5, Max = 1.1, Float = 0.01, Value = 1, Flag = "aspect_ratio_y", Callback = function(int)
 			aspect_ratio_y = int
 		end})
-		--[[
-		local avatar_changer_used = false
 
-		local avatar_userid_textbox = mscsec:Textbox({
-			Name = "Avatar UserId",
-			Value = "80254",
-			Flag = "view_avatar_userid"
-		})
 
-		mscsec:Button({Name = "Set avatar", Confirm = false, Callback = function()
-			avatar_changer_used = true
 
-			local user_id = Library.Flags["view_avatar_userid"]
-			local success, result = pcall(tonumber, user_id)
-			if not success then
-				return Library.Notification("Invalid number inputted", 2.5)
-			end
 
-			local valid_parts = {
-				["Head"] = true,
-				["LeftFoot"] = true,
-				["LeftHand"] = true,
-				["LeftLowerArm"] = true,
-				["LeftLowerLeg"] = true,
-				["LeftUpperArm"] = true,
-				["LeftUpperLeg"] = true,
-				["RightFoot"] = true,
-				["RightHand"] = true,
-				["RightLowerArm"] = true,
-				["RightLowerLeg"] = true,
-				["RightUpperArm"] = true,
-				["RightUpperLeg"] = true,
-				["LowerTorso"] = true,
-				["UpperTorso"] = true
-			}
 
-			local success, wanted_plr_model = pcall(Players.CreateHumanoidModelFromUserId, Players, user_id)
-			if not success then
-				return Library.Notification("Invalid UserId inputted or try again later.", 2.5)
-			end
 
-			local character = LocalPlayer.Character
 
-			if not character then
-				return
-			end
 
-			for _, child in character:GetChildren() do
-				local class = child.ClassName
-				
-				if class == "Accessory" then
-					child:Destroy()
-				end
 
-				if child:GetAttribute("ItemType") then
-					child:Destroy()
-				end
-			end
 
-			for _, child in wanted_plr_model:GetChildren() do
-				local class = child.ClassName
-				
-				if class == "Shirt" or class == "Pants" then
-					local stuff = character:FindFirstChildOfClass(class)
-					if not stuff then continue end
 
-					stuff[class.."Template"] = child[class.."Template"]
-				end
 
-				if class == "Accessory" then
-					local handle = child:FindFirstChild("Handle")
-					local weld = handle and handle:FindFirstChild("AccessoryWeld")
-					if not weld then continue end
-					
-					local weld_part = character:FindFirstChild(weld.Part1.Name)
-					if not weld_part then continue end
 
-					weld.Part1 = weld_part
-					child.Parent = character
-				end
 
-				if class == "MeshPart" and valid_parts[child.Name] then
-					local grrr = character:FindFirstChild(child.Name)
-					if not grrr then continue end
-					
-					grrr.Color = child.Color
-				end
-			end
 
-			wanted_plr_model:Destroy()
-		end})
 
-		local character_childadded
-		if LocalPlayer.Character then
-			character_childadded = LocalPlayer.Character.ChildAdded:Connect(function(child)
-				if avatar_changer_used and child:GetAttribute("ItemType") then child:Destroy() end
-			end)
-		end
-		LocalPlayer.CharacterAdded:Connect(function(character)
-			avatar_changer_used = false
-			character_childadded = character.ChildAdded:Connect(function(child)
-				if avatar_changer_used and child:GetAttribute("ItemType") then child:Destroy() end
-			end)
-		end)
 
-		LocalPlayer.CharacterRemoving:Connect(function(character)
-			if character_childadded then character_childadded:Disconnect() end
-		end)]]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 		local avatar_changer = false
 		local avatar_changer_used = false
@@ -8423,7 +8581,7 @@ do
 
 			for _, child in character:GetChildren() do
 				local class = child.ClassName
-				
+
 				if class == "Accessory" then
 					child:Destroy()
 				end
@@ -8435,7 +8593,7 @@ do
 
 			for _, child in wanted_plr_model:GetChildren() do
 				local class = child.ClassName
-				
+
 				if class == "Shirt" or class == "Pants" then
 					local stuff = character:FindFirstChildOfClass(class)
 					if not stuff then continue end
@@ -8447,7 +8605,7 @@ do
 					local handle = child:FindFirstChild("Handle")
 					local weld = handle and handle:FindFirstChild("AccessoryWeld")
 					if not weld then continue end
-					
+
 					local weld_part = character:FindFirstChild(weld.Part1.Name)
 					if not weld_part then continue end
 
@@ -8458,7 +8616,7 @@ do
 				if class == "MeshPart" and valid_parts[child.Name] then
 					local grrr = character:FindFirstChild(child.Name)
 					if not grrr then continue end
-					
+
 					grrr.Color = child.Color
 				end
 			end
@@ -8470,10 +8628,10 @@ do
 			avatar_changer = bool
 			task.spawn(change_avatar)
 		end})
-		
+
 		mscsec:Textbox({
 			Name = "Avatar UserId",
-			Value = "5019585244",
+			Value = "80254",
 			Flag = "view_avatar_userid",
 			Callback = function()
 				task.spawn(change_avatar)
@@ -8514,7 +8672,7 @@ do
 			if Camera.FieldOfView ~= zoom_size and Camera.FieldOfView ~= fov_changer_size then
 				old_fov = Camera.FieldOfView
 			end
-			if not (zoom and zoom_key or fov_changer) then return end 
+			if not (zoom and zoom_key or fov_changer) then return end
 			Camera.FieldOfView = (zoom and zoom_key and zoom_size) or (fov_changer and fov_changer_size)
 		end)
 
@@ -8596,7 +8754,7 @@ do
 		if LocalPlayer.Character then task.spawn(update_neck_loop, LocalPlayer.Character) end
 		LocalPlayer.CharacterAdded:Connect(update_neck_loop)
 	end
-	do -- lcl sec
+	do
 		do
 			local indicator_holder = Instance.new("Frame")
 			indicator_holder.Parent = game:GetService("CoreGui").RobloxGui
@@ -8614,7 +8772,7 @@ do
 			indicator_text.BorderSizePixel = 0
 			indicator_text.Position = UDim2.new(0, 2, 0, 0)
 			indicator_text.FontFace = default_font
-			indicator_text.Text = ""--"xXx_sw1mdr0id_xXx's Inventory\n[Hotbar]\n\tMP5SD\n\tAKMN\n\tAKMN\n"
+			indicator_text.Text = ""
 			indicator_text.TextColor3 = Color3.new(1, 1, 1)
 			indicator_text.TextSize = 9
 			indicator_text.TextStrokeTransparency = 0
@@ -8658,11 +8816,11 @@ do
 			end})
 			lclsec:Slider({Name = "Indicator Y", Min = 0, Max = 100, Float = 1, Value = 5, Flag = "visor_indicator_y", Suffix = "%s%%", Callback = function(int)
 				indicator_holder.Position = UDim2.new(indicator_holder.Position.X.Scale, -GuiInset.X, int / 100, -GuiInset.Y)
-				--print(indicator_holder.Position)
+
 			end})
 
 			local lpo = cheat.player_list[LocalPlayer]
-			cheat.utility.new_heartbeat(LPH_JIT(function()		
+			cheat.utility.new_heartbeat(LPH_JIT(function()
 				if lpo.visor then
 					indicator_text.Text = "visor on"
 					indicator_text.TextColor3 = on_color
@@ -8828,28 +8986,28 @@ do
 		local hum = character and _FindFirstChildOfClass(character, "Humanoid")
 		local old_nofall_pos, should_no_fall = nil, false
 
-		--[[game:GetService("RunService").PreSimulation:Connect(LPH_NO_VIRTUALIZE(function()
-			local character = LocalPlayer.Character
-			if not character then
-				return
-			end
 
-			local hrp = _FindFirstChild(character, "HumanoidRootPart")
-			local hum = _FindFirstChildOfClass(character, "Humanoid")
-			if not (hrp and hum) then
-				return
-			end
 
-			local currpos = hrp.CFrame.Position
 
-			if not nofall or not table.find(falling_states, hum:GetState()) then
-				should_no_fall = false
-				return
-			end
 
-			hum:ChangeState(Enum.HumanoidStateType.Running)
-			should_no_fall = true
-		end))]]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 		task.spawn(function()
 			while RunService.Heartbeat:Wait() do
@@ -9063,7 +9221,7 @@ do
 	main_wireframe.Thickness = 1
 	main_wireframe.AdornCullingMode = Enum.AdornCullingMode.Automatic
 
-	do --if SWG_Note:find("alpha") then
+	do
 		local original_rate, original_bandwidth = getfflag("S2PhysicsSenderRate"), getfflag("PhysicsSenderMaxBandwidthBps")
 
 		local desync_freeze, desync_freeze_key, desync_freeze_factor = false, false, 100
@@ -9160,29 +9318,29 @@ do
 				old = now
 				isSleeping = not isSleeping
 				sethiddenproperty(hrp, "NetworkIsSleeping", isSleeping)
-				--[[sethiddenproperty(LocalPlayer, "MaximumSimulationRadius", 2^1023 * (isSleeping and 1 or -1)) 
-				sethiddenproperty(LocalPlayer, "MaxSimulationRadius", 2^1023 * (isSleeping and 1 or -1)) 
-				sethiddenproperty(LocalPlayer, "SimulationRadius", 2^1023 * (isSleeping and 1 or -1)) ]]
-				--replicatesignal(game.Players.LocalPlayer.SimulationRadiusChanged, 2^1023 * (isSleeping and 1 or -1))
+
+
+
+
 			end
 		end)
 
-		--[[RunService.Heartbeat:Connect(function()
-			if not (desync_turned_on) then
-				return
-			end
 
-			local hrp = get_hrp()
-			if not hrp then return end
 
-			if (forced_cframe) then
-				hrp.CFrame = forced_cframe
-				--hrp.AssemblyLinearVelocity = Vector3.zero
-			end
-		end)]]
 
-		-- this desync was fucking made by D-D-D-D-DJ SWIMDROID
-		-- ТЁЛКИ СНИМАЙТЕ ТРУСЫ		
+
+
+
+
+
+
+
+
+
+
+
+
+
 	end
 
 	getgenv().animbreaker_x = 0
@@ -9198,7 +9356,7 @@ do
 	expsec:Slider({Name = "Z animbreaker", Min = -10, Max = 10, Float = 0.1, Value = 0, Flag = "animbreaker_z_offset", Callback = function(int)
 		getgenv().animbreaker_z = int * 100000
 	end})
-	
+
 	local shitcode, shitcode_tick, shitcode_factor = false, tick(), 60
 	expsec:Toggle({Name = "FPS limiter", Flag = "old_swimhub_mode", Value = false, Callback = function(v)
 		shitcode = v
@@ -9215,7 +9373,7 @@ do
 	expsec:Slider({Name = "FPS Limit", Min = 2, Max = 60, Float = 0.1, Value = 0, Flag = "shitcode_factor", Callback = function(int)
 		shitcode_factor = int
 	end})
-	
+
 
 	local ds_keybind; ds_keybind = dscsec:Toggle({Name = "Enabled", Value = false, Flag = "desync_enabled", Callback = function(bool)
 		desync_enabled = bool
@@ -9322,7 +9480,7 @@ do
 		replicated_hrp_cframe = forced_cframe or old_cframe * hrp_offset
 
 		hrp.CFrame = replicated_hrp_cframe
-		
+
 		if desync_velocity then
 			hrp.AssemblyLinearVelocity = _Vector3new(
 				desync_velocity_x,
@@ -9341,17 +9499,17 @@ do
 	end))
 
 	local VERTICES = {
-		-- left face
+
 		_Vector3new(-1,-1,-1), _Vector3new(-1, 1,-1),
 		_Vector3new(-1, 1,-1), _Vector3new(-1, 1, 1),
 		_Vector3new(-1, 1, 1), _Vector3new(-1,-1, 1),
 		_Vector3new(-1,-1, 1), _Vector3new(-1,-1,-1),
-		-- right face
+
 		_Vector3new( 1,-1,-1), _Vector3new( 1, 1,-1),
 		_Vector3new( 1, 1,-1), _Vector3new( 1, 1, 1),
 		_Vector3new( 1, 1, 1), _Vector3new( 1,-1, 1),
 		_Vector3new( 1,-1, 1), _Vector3new( 1,-1,-1),
-		-- connections
+
 		_Vector3new(-1,-1,-1), _Vector3new( 1,-1,-1),
 		_Vector3new(-1, 1,-1), _Vector3new( 1, 1,-1),
 		_Vector3new(-1, 1, 1), _Vector3new( 1, 1, 1),
@@ -9608,7 +9766,7 @@ do
 			if not bloom then
 				bloom = Instance.new("BloomEffect")
 				bloom.Parent = Lighting
-				--print('had to make a new bloom... collar is blue but reck is ned')
+
 			end
 			local bloom_changer, bloom_changing = false, false
 			local old_bloom = {
@@ -9732,7 +9890,7 @@ do
 								string.format( "Invalid config name (%s).", Utility.RichText( ConfigName, Library.Theme.accent ) ), 5
 							)
 						end
-					end, 
+					end,
 				})
 
 				Config:Button({
@@ -9805,7 +9963,7 @@ do
 			local Personalization = ui.sections.settings_personalization
 			do
 				local TweenTypes = {}
-				for _,v in Enum.EasingStyle:GetEnumItems() do 
+				for _,v in Enum.EasingStyle:GetEnumItems() do
 					table.insert(TweenTypes, v.Name)
 				end
 				Personalization:Keybind({Name = "Window Key", Ignore = true, Key = Enum.KeyCode.Delete, Flag = "menu_key", Callback = function()
@@ -9830,7 +9988,7 @@ do
 					Callback = function(v)
 						Watermark.SetText(v)
 					end
-				}) 
+				})
 				Personalization:Toggle({Name = "Keybind List", Flag = "menu_keybind_list", Value = true, Callback = function(v)
 					Library.KeybindsList.Status(v)
 				end})
@@ -9907,7 +10065,7 @@ do
 								string.format( "Invalid theme name (%s).", Utility.RichText( ConfigName, Library.Theme.accent ) ), 5
 							)
 						end
-					end, 
+					end,
 				})
 
 				Config:Button({
@@ -9995,15 +10153,15 @@ do
 	local TweenService = game:GetService("TweenService")
 	local GuiService = game:GetService("GuiService")
 
-	local bullet_infos = cheat.bullet_infos -- {}
-		--[[
-			table.create(4) -> {
-				[1] = bulletid
-				[2] = tick
-				[3] = lv
-				[4] = held?
-			}
-		]]
+	local bullet_infos = cheat.bullet_infos
+
+
+
+
+
+
+
+
 
 	local get_estimated_origin = project_delta.get_estimated_origin
 
@@ -10047,14 +10205,19 @@ do
 	local __namecall; __namecall = hookmetamethod(game, "__namecall", newcclosure(LPH_NO_VIRTUALIZE(function(self, ...)
 		local args = {...}
 		local method = getnamecallmethod()
-		
+
+		if method == "FireServer" and self.Name == "Trap" and Library.Flags["misc_remove_mines"] then
+			return
+		end
+
 		if method == "Raycast" and aimbot_mode == "Silent" then
 			local hitpart = target_part
 			if not (hitpart and debugtraceback():find("Bullet")) then
 				return __namecall(self, ...)
 			end
 
-			--print(":3", debugtraceback())
+
+
 
 			local hitpos = hitpart.Position
 
@@ -10096,7 +10259,6 @@ do
 		if method == "InvokeServer" then
 			local remote_name = self.Name
 			if remote_name == "FireProjectile" and aimbot_mode == "Silent" then
-				--args[3] = 0/0
 				local r = table.create(3)
 				r[1] = args[2]
 				r[2] = args[3]
@@ -10134,7 +10296,7 @@ do
 						}
 					end
 				end
-				
+
 				return __namecall(self, unpack(args))
 			end
 			if remote_name == "UpdateTilt" and antiaim and antiaim_pitch then
@@ -10157,25 +10319,169 @@ if project_delta.fps_object then
 end
 
 task.spawn(function()
-	--[[
 
-		# Cross-Script Communication made for Project Delta by liam
-		# This allows for script users to communicate with eachother despite the new roblox chat age verification restrictions, and without a chat filter.
-		# This will be offered and given to every major script provider.
-		# You are expected to keep the lua file and your api key private, your api key will be removed if it gets exposed.
 
-		# To get started, replace "API_KEY" with your given api key. If you are obfuscating with luraph, make sure to keep the LPH_ENCSTR for the key to be encrypted during obfuscation.
-		# If it successfully loaded, the loadstring with return a table with the function 'SetSendingEnabled'.
-		# 'SetSendingEnabled' requires a boolean, this function is used to toggle whether the users messages get sent in the custom chat or not (if you want to put this on a toggle for example).
-		# The chatbox input box will be automatically enabled if SendingEnabled is set to true.
-		# Currently if SendingEnabled is true, messages wont be sent to normal players that have their chat verified, i will fix this in the future once i get accounts to test on.
 
-		###### DISCLAIMER ######
-		There is a *VERY* small possibility this could become detected in the future if solter somehow catches on and sees how this works. (same goes for any feature)
-		Although that is extremely unlikely to happen, its recommended to warn users that this feature could possibly be risky (with a tooltip or something similar)
-		Detection is not possible period if a user never sends a message with SendingEnabled set to true
 
-	--]]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 	cheat.CrossScriptChat = {SetSendingEnabled=function(...)end}
 end)
+
+do
+	local mine_folders = {
+		"OutpostLandmines",
+		"OutpostClaymores",
+		"HeliCrashClaymores",
+		"ShipWreckClaymores",
+		"BridgeClaymores"
+	}
+
+	local function is_mine_name(name)
+		name = string.lower(name)
+		return string.find(name, "landmine", 1, true) ~= nil or string.find(name, "claymore", 1, true) ~= nil
+	end
+
+	local function destroy_in(root)
+		for _, folder_name in mine_folders do
+			local folder = root:FindFirstChild(folder_name)
+			if folder then
+				for _, mine in folder:GetChildren() do
+					pcall(function() mine:Destroy() end)
+				end
+			end
+		end
+	end
+
+	local function sweep_mines()
+		local roots = {
+			workspace:FindFirstChild("AiZones"),
+			workspace:FindFirstChild("NoCollision") and workspace.NoCollision:FindFirstChild("AiZones")
+		}
+		for _, root in roots do
+			if root then
+				destroy_in(root)
+			end
+		end
+		for _, inst in workspace:GetDescendants() do
+			if is_mine_name(inst.Name) and (inst:IsA("BasePart") or inst:IsA("Model")) then
+				pcall(function() inst:Destroy() end)
+			end
+		end
+	end
+
+	local wired_roots = {}
+	local sweeping = false
+
+	local function wire_mines()
+		local roots = {
+			workspace:FindFirstChild("AiZones"),
+			workspace:FindFirstChild("NoCollision") and workspace.NoCollision:FindFirstChild("AiZones")
+		}
+		for _, root in roots do
+			if root and not wired_roots[root] then
+				wired_roots[root] = true
+				root.DescendantAdded:Connect(function(child)
+					if Library.Flags["misc_remove_mines"] and is_mine_name(child.Name) then
+						task.defer(function()
+							pcall(function() child:Destroy() end)
+						end)
+					end
+				end)
+			end
+		end
+	end
+
+	local function sweep_loop()
+		if sweeping then
+			return
+		end
+		sweeping = true
+		task.spawn(function()
+			while task.wait(2) do
+				if not Library.Flags["misc_remove_mines"] then
+					sweeping = false
+					return
+				end
+				sweep_mines()
+			end
+		end)
+	end
+
+	local miscsec = ui.sections.misc
+	miscsec:Toggle({Name = "Remove mines", Value = false, Flag = "misc_remove_mines", Callback = function(bool)
+		if bool then
+			wire_mines()
+			sweep_mines()
+			sweep_loop()
+		end
+	end})
+	miscsec:Button({Name = "Diag", Callback = function()
+		local out = {}
+		local itemslist = game:GetService("ReplicatedStorage"):FindFirstChild("ItemsList")
+		if itemslist then
+			local names = {}
+			for _, item in itemslist:GetChildren() do
+				names[#names + 1] = item.Name .. " (" .. item.ClassName .. ")"
+				if #names >= 60 then
+					break
+				end
+			end
+			out[#out + 1] = "items=" .. table.concat(names, "|")
+		else
+			out[#out + 1] = "items=none"
+		end
+		local roots = {
+			workspace:FindFirstChild("AiZones"),
+			workspace:FindFirstChild("NoCollision") and workspace.NoCollision:FindFirstChild("AiZones")
+		}
+		for _, root in roots do
+			if root then
+				local found = {}
+				for _, f in root:GetChildren() do
+					found[#found + 1] = f.Name .. "x" .. #f:GetChildren()
+					if #found >= 25 then
+						break
+					end
+				end
+				out[#out + 1] = "root=" .. root:GetFullName() .. " folders=" .. table.concat(found, "|")
+			end
+		end
+		local rems = game:GetService("ReplicatedStorage"):FindFirstChild("Remotes")
+		out[#out + 1] = "trap=" .. tostring(rems and rems:FindFirstChild("Trap") ~= nil)
+		local data = project_delta.local_game_data
+		local inv = data and data:FindFirstChild("Inventory")
+		if inv then
+			local conts = {}
+			for _, c in inv:GetChildren() do
+				local inner = c:FindFirstChild("Inventory")
+				local n = 0
+				if inner then
+					n = #inner:GetChildren()
+				end
+				conts[#conts + 1] = c.Name .. "x" .. n
+			end
+			out[#out + 1] = "containers=" .. table.concat(conts, "|")
+		else
+			out[#out + 1] = "containers=none"
+		end
+		for _, line in out do
+			print("[diag] " .. line)
+		end
+		Library.Notification("diag printed in console", 3)
+	end})
+end
