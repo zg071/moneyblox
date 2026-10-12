@@ -7406,19 +7406,27 @@ do
 			end
 		end
 		local tpkill_height_slider, tpkill_uptime_slider, tpkill_cd_slider, tpkill_face_toggle, tpkill_track_toggle = nil, nil, nil, nil, nil
-		tpkill_toggle = mscsec:Toggle({Name = "TP kill", Value = false, Flag = "tpkill", Callback = function(bool)
-			tpkill_set(bool)
-			if not tpkill_on and tpkill_keybind then tpkill_keybind.Set(false, true) end
+		local function tpkill_refresh()
 			local vis = tpkill_on and true or false
 			if tpkill_height_slider then tpkill_height_slider.State(vis) end
 			if tpkill_uptime_slider then tpkill_uptime_slider.State(vis) end
 			if tpkill_cd_slider then tpkill_cd_slider.State(vis) end
 			if tpkill_face_toggle then tpkill_face_toggle.State(vis) end
 			if tpkill_track_toggle then tpkill_track_toggle.State(vis) end
+		end
+		local tpkill_armed = false
+		tpkill_toggle = mscsec:Toggle({Name = "TP kill", Value = false, Flag = "tpkill", Callback = function(bool)
+			tpkill_armed = bool
+			tpkill_set(bool)
+			tpkill_refresh()
+			if not tpkill_on and tpkill_keybind then tpkill_keybind.Set(false, true) end
 		end})
 		local tpkill_keybind; tpkill_keybind = tpkill_toggle:Keybind({Name = "TP kill", Mode = "Toggle", Modes = {"Hold", "Toggle"}, Key = Enum.KeyCode.T, Value = false, Flag = "tpkill_key", Link = "tpkill", Callback = function(bool)
-			tpkill_toggle.Set(bool)
-			tpkill_keybind.Set(bool, true)
+			if tpkill_armed then
+				tpkill_set(bool)
+				tpkill_refresh()
+			end
+			tpkill_keybind.Set(false, true)
 		end})
 		tpkill_height_slider = mscsec:Slider({Name = "TP kill height", Min = 5, Max = 300, Float = 1, Value = 200, Flag = "tpkill_height", Callback = function(int)
 			tpkill_height = int
@@ -7463,6 +7471,10 @@ do
 				return
 			end
 			if tick() - tpkill_go > tpkill_uptime then
+				tpkill_set(false)
+				tpkill_keybind.Set(false, true)
+				tpkill_refresh()
+				tpkill_armed = false
 				tpkill_toggle.Set(false)
 				return
 			end
@@ -12441,7 +12453,7 @@ do
 	end})
 	fps_limit_slider.State(false)
 	local bring_keybind; bring_keybind = expsec:Toggle({Name = "Bring vehicle", Value = false, Flag = "bring_vehicle", Callback = function(bool)
-		cheat.feat.bring_vehicle = bool
+cheat.feat.bring_vehicle = bool
 	end}):Keybind({Name = "Bring vehicle", Mode = "Toggle", Key = Enum.KeyCode.V, Value = false, Flag = "bring_vehicle_key", Link = "bring_vehicle", Callback = function(bool)
 		if bool and cheat.feat.bring_vehicle then
 			task.spawn(function()
