@@ -3,8 +3,7 @@
 
 
 
--- FABRICATED VALUES!!!
--- ^^^ this line is official 2 years old
+
 
 if not LPH_OBFUSCATED then
 	LPH_JIT = function(...)
@@ -46,18 +45,6 @@ if (getgenv and getgenv() or _G).Library then
 	(getgenv and getgenv() or _G).Library.Unload()
 end
 
-do
-	local is_loaded = false
-	pcall(function()
-		is_loaded = game:IsLoaded()
-	end)
-	if not is_loaded then
-		pcall(function()
-			game.Loaded:Wait()
-		end)
-	end
-end
-
 local Folder = "moneyblox"
 makefolder(Folder)
 
@@ -69,6 +56,9 @@ makefolder(FontsFolder)
 
 local HitsoundFolder = string.format( "%s\\%s\\", Folder, "Hitsounds" )
 makefolder(HitsoundFolder)
+
+local SoundsFolder = string.format( "%s\\%s\\", Folder, "Sounds" )
+makefolder(SoundsFolder)
 
 local PicturesOnKillFolder = string.format( "%s\\%s\\", Folder, "PicturesOnKill" )
 
@@ -84,6 +74,7 @@ makefolder(ConfigFolder)
 local ThemeFolder = string.format( "%s\\%s\\", Folder, "Themes" )
 makefolder(ThemeFolder)
 
+local admin_join_asset, admin_leave_asset = "", ""
 local Fonts, Images = LPH_JIT(function()
 	local RunService = game:GetService("RunService")
 	local HttpService = game:GetService("HttpService")
@@ -160,7 +151,7 @@ local Fonts, Images = LPH_JIT(function()
 	end
 
 	local Images = {
-		URL = "https://raw.githubusercontent.com/SWIMHUBISWIMMING/librehub/refs/heads/main/assets/",
+		URL = "https://raw.githubusercontent.com/zg071/moneyblox/refs/heads/main/assets/",
 
 		Names = {
 			"combat",
@@ -203,8 +194,92 @@ local Fonts, Images = LPH_JIT(function()
 			Images.Load(image)
 		end
 	end
+
+	local Boykisser = {
+		URL = "https://raw.githubusercontent.com/zg071/moneyblox/refs/heads/main/assets/",
+	}; do
+		function Boykisser.Load()
+			if RunService:IsStudio() then return end
+			local PNG = string.format("%s%s.png", ImagesFolder, "boykisser")
+			if not isfile(PNG) then
+				local done = false
+				local success, data = pcall(function()
+					return game:HttpGet(string.format("%s%s.txt", Boykisser.URL, "boykisser"))
+				end)
+				if success and data then
+					local ok, decoded = pcall(function()
+						return base64_decode(data)
+					end)
+					if ok and decoded then
+						writefile(PNG, decoded)
+						done = true
+					end
+				end
+				if not done then
+					local s2, d2 = pcall(function()
+						return game:HttpGet(string.format("%s%s.png", Boykisser.URL, "boykisser"))
+					end)
+					if s2 and d2 then
+						writefile(PNG, d2)
+						done = true
+					end
+				end
+				if not done then
+					return
+				end
+			end
+			local ok, asset = pcall(function()
+				return getcustomasset(PNG)
+			end)
+			if ok and asset then
+				boykisser_asset = asset
+			end
+		end
+		Boykisser.Load()
+	end
+
+	local AdminSounds = {
+		URL = "https://github.com/zg071/moneyblox/raw/refs/heads/main/assets/",
+		Names = {"admjoin", "admleave"},
+		Data = {}
+	}; do
+		function AdminSounds.Load(name)
+			if RunService:IsStudio() then return "" end
+			local MP3 = string.format("%s%s.mp3", SoundsFolder, name)
+			if not isfile(MP3) then
+				local success, data = pcall(function()
+					return game:HttpGet(AdminSounds.URL .. name .. ".mp3")
+				end)
+				if success and data then
+					local ok, decoded = pcall(function()
+						return base64_decode(data)
+					end)
+					if ok and decoded then
+						writefile(MP3, decoded)
+					else
+						writefile(MP3, data)
+					end
+				else
+					return ""
+				end
+			end
+			if isfile(MP3) then
+				local ok, asset = pcall(function()
+					return getcustomasset(MP3)
+				end)
+				if ok and asset then
+					AdminSounds.Data[name] = asset
+					return asset
+				end
+			end
+			return ""
+		end
+		admin_join_asset = AdminSounds.Load("admjoin")
+		admin_leave_asset = AdminSounds.Load("admleave")
+	end
 	return Fonts, Images
 end)();
+local boykisser_asset = ""
 local Library, Utility = LPH_JIT(function()
 	local UserInputService = game:GetService("UserInputService")
 	local RunService = game:GetService("RunService")
@@ -706,19 +781,42 @@ local Library, Utility = LPH_JIT(function()
 				Items = { },
 
 				ShowMode = cfg.showmode,
+
+				View = "All",
 			}
 
+			function List.Refresh()
+				for _, item in List.Items do
+					if item.LastText ~= nil then
+						item.Set(item.LastValue, item.LastText, item.LastMode, item.LastKey, item.LastOn)
+					end
+				end
+			end
+
+			function List.FitWidth()
+				if not List.Objects.accent then return end
+				local w = 150
+				for _, item in List.Items do
+					if item.LastText ~= nil then
+						local s = "[" .. (item.LastKey or "-") .. "] " .. item.LastText .. " [" .. (item.LastMode or "") .. "]"
+						w = math.max(w, #s * 7 + 50)
+					end
+				end
+				List.Objects.accent.Size = UDim2.new(0, w, 0, 0)
+			end
+
 			local Objects = List.Objects; do
-				Objects.accent = Utility.New("Frame", {
-					Name = "accent",
-					Position = UDim2.new(0, 20, 0.5, 0),
-					BorderColor3 = Color3.fromRGB(0, 0, 0),
-					Size = UDim2.new(0, cfg.size, 0, 0),
-					BorderSizePixel = 0,
-					AutomaticSize = Enum.AutomaticSize.Y,
-					BackgroundColor3 = Color3.fromRGB(220, 100, 100),
-					Parent = Library.ScreenGuiPopups,
-				}, { BackgroundColor3 = "accent" })
+			Objects.accent = Utility.New("Frame", {
+				Name = "accent",
+				Position = UDim2.new(0, 20, 0.5, 0),
+				BorderColor3 = Color3.fromRGB(0, 0, 0),
+				Size = UDim2.new(0, cfg.size, 0, 0),
+				BorderSizePixel = 0,
+				AutomaticSize = Enum.AutomaticSize.Y,
+				BackgroundColor3 = Color3.fromRGB(19, 19, 19),
+				BackgroundTransparency = 0.5,
+				Parent = Library.ScreenGuiPopups,
+			})
 
 				Library.Dragging(Objects.accent, Objects.accent, true)
 
@@ -728,9 +826,10 @@ local Library, Utility = LPH_JIT(function()
 					BorderColor3 = Color3.fromRGB(0, 0, 0),
 					Size = UDim2.new(1, -2, 1, -2),
 					BorderSizePixel = 0,
-					BackgroundColor3 = Color3.fromRGB(23, 25, 26),
+					BackgroundColor3 = Color3.fromRGB(19, 19, 19),
+					BackgroundTransparency = 0.5,
 					Parent = Objects.accent,
-				}, { BackgroundColor3 = "background" })
+				})
 
 				Utility.New("UIListLayout", {
 					Padding = UDim.new(0, 4),
@@ -878,10 +977,20 @@ local Library, Utility = LPH_JIT(function()
 					Parent = Text,
 				}, { TextColor3 = "accent" })
 
-				function Item.Set(value, text, mode)
-					Holder.Visible = value
-					Text.Text = text
+				function Item.Set(value, text, mode, key, funcOn)
+					Item.LastValue, Item.LastText, Item.LastMode, Item.LastKey, Item.LastOn = value, text, mode, key, funcOn
+					local showAll = List.View == "All"
+					Holder.Visible = showAll and funcOn or value
+					Text.Text = string.format("[%s] %s", key or "-", text)
+					Text.TextSize = 12
 					Accent.Text = string.format("[%s]", mode)
+					Accent.Visible = value
+					if showAll and funcOn and not value then
+						Text.TextColor3 = Color3.fromRGB(126, 126, 126)
+					else
+						Text.TextColor3 = Color3.fromRGB(230, 230, 230)
+					end
+					List.FitWidth()
 				end
 
 				table.insert(List.Items, Item)
@@ -2039,32 +2148,32 @@ local Library, Utility = LPH_JIT(function()
 					Parent = Objects.inline,
 				}, { BackgroundColor3 = "background" })
 
-				Objects.accent = Utility.New("Frame", {
-					Name = "accent",
-					Position = UDim2.new(0, 1, 0, 1),
-					BorderColor3 = Color3.fromRGB(0, 0, 0),
-					Size = UDim2.new(1, -2, 1, -2),
-					BorderSizePixel = 0,
-					BackgroundColor3 = Color3.fromRGB(220, 100, 100),
-					Parent = Objects.background,
-				}, { BackgroundColor3 = "accent" })
+			Objects.accent = Utility.New("Frame", {
+				Name = "accent",
+				Position = UDim2.new(0, 1, 0, 1),
+				BorderColor3 = Color3.fromRGB(0, 0, 0),
+				Size = UDim2.new(1, -2, 1, -2),
+				BorderSizePixel = 0,
+				BackgroundColor3 = Color3.fromRGB(220, 100, 100),
+				Parent = Objects.background,
+			}, { BackgroundColor3 = "accent" })
 
-				Objects.text = Utility.New("TextLabel", {
-					FontFace = Library.Font,
-					TextColor3 = Color3.fromRGB(230, 230, 230),
-					BorderColor3 = Color3.fromRGB(0, 0, 0),
-					Text = cfg.name,
-					TextStrokeTransparency = 0,
-					Name = "text",
-					Size = UDim2.new(1, -25, 1, -3),
-					BackgroundTransparency = 1,
-					TextXAlignment = Enum.TextXAlignment.Left,
-					Position = UDim2.new(0, 25, 0, 0),
-					BorderSizePixel = 0,
-					TextSize = Library.FontSize,
-					BackgroundColor3 = Color3.fromRGB(25, 25, 25),
-					Parent = Objects.line,
-				}, { TextColor3 = "text" })
+			Objects.text = Utility.New("TextLabel", {
+				FontFace = Library.Font,
+				TextColor3 = Color3.fromRGB(230, 230, 230),
+				BorderColor3 = Color3.fromRGB(0, 0, 0),
+				Text = cfg.name,
+				TextStrokeTransparency = 0,
+				Name = "text",
+				Size = UDim2.new(1, -25, 1, -3),
+				BackgroundTransparency = 1,
+				TextXAlignment = Enum.TextXAlignment.Left,
+				Position = UDim2.new(0, 25, 0, 0),
+				BorderSizePixel = 0,
+				TextSize = Library.FontSize,
+				BackgroundColor3 = Color3.fromRGB(25, 25, 25),
+				Parent = Objects.line,
+			}, { TextColor3 = "text" })
 
 				Utility.New("UIListLayout", {
 					VerticalAlignment = Enum.VerticalAlignment.Center,
@@ -2092,6 +2201,15 @@ local Library, Utility = LPH_JIT(function()
 				cfg.callback(value)
 
 				Library.Flags[cfg.flag] = value
+
+				if Library.KeybindsList then
+					for _, item in Library.KeybindsList.Items do
+						if item.LinkFlag and item.LinkFlag == cfg.flag and item.LastText ~= nil then
+							local funcOn = Library.Flags[cfg.flag] and true or false
+							item.Set(item.LastValue, item.LastText, item.LastMode, item.LastKey, funcOn)
+						end
+					end
+				end
 			end
 
 			function Toggle.Enable()
@@ -4069,13 +4187,14 @@ local Library, Utility = LPH_JIT(function()
 				end))
 			end; Keybind.ZIndex = ZIndex
 
-			for _,mode in {"Always on", "Hold", "Toggle"} do
+			for _,mode in cfg.modes or {"Always on", "Hold", "Toggle"} do
 				Popup.Add(mode)
 			end
 
 			local Item;
 			if not cfg.ignore then
 				Item = Library.KeybindsList.Add()
+				Item.LinkFlag = cfg.link
 			end
 
 			function Keybind.Set(value, ignore)
@@ -4103,6 +4222,10 @@ local Library, Utility = LPH_JIT(function()
 					Keybind.Value = value
 				elseif Type == "string" then
 
+					if cfg.modes and not table.find(cfg.modes, value) then
+						value = cfg.modes[1]
+					end
+
 					if Keybind.OnHold and value ~= "Hold" then
 						Keybind.OnHold:Disconnect( )
 						Keybind.OnHold = nil
@@ -4118,7 +4241,12 @@ local Library, Utility = LPH_JIT(function()
 				end
 
 				if Item then
-					Item.Set(Keybind.Value, cfg.name, Keybind.Mode or "Toggle")
+					local keyname = Keybind.Key and Keybind.Key.Name or "-"
+					local funcOn = true
+					if cfg.link then
+						funcOn = Library.Flags[cfg.link] and true or false
+					end
+					Item.Set(Keybind.Value, cfg.name, Keybind.Mode or "Toggle", keyname, funcOn)
 				end
 
 				if not ignore then
@@ -4282,6 +4410,7 @@ local Library, Utility = LPH_JIT(function()
 
 			return setmetatable(Keybind, Library)
 		end
+
 
 		function Library.Watermark(self, cfg)
 			cfg = cfg or { }; cfg = Library.Config(cfg, {
@@ -4642,6 +4771,9 @@ local Library, Utility = LPH_JIT(function()
 					end
 				end
 			end
+			pcall(function()
+				Library.KeybindsList.Refresh()
+			end)
 		end
 
 		function Library.Unload()
@@ -4667,7 +4799,7 @@ local PicturesOnKill = LPH_JIT(function()
 
 
 	local PicturesOnKill = {
-		URL = "https://raw.githubusercontent.com/SWIMHUBISWIMMING/librehub/refs/heads/main/assets/",
+		URL = "https://raw.githubusercontent.com/zg071/moneyblox/refs/heads/main/assets/",
 
 		DefaultImages = {
 			"sigil.png",
@@ -4911,6 +5043,9 @@ do
 	local old = fps_module.new
 
 	project_delta.update_fps = getupvalue(old, 5)
+	if type(project_delta.update_fps) ~= "function" then
+		project_delta.update_fps = function(...) end
+	end
 	project_delta.remove_bullet = getupvalue(project_delta.fps_usetypes.RangedWeaponDefault, 4)
 
 	fps_module.new = function(player, character)
@@ -5266,6 +5401,7 @@ LPH_NO_VIRTUALIZE(function()
 					dead_check = false,
 					dist_check = false,
 					npc_check = false,
+					visible_check = false,
 					max_distance = 1000,
 					skeleton_rate = 1e-10,
 					gradient_spin = false,
@@ -5685,7 +5821,7 @@ LPH_NO_VIRTUALIZE(function()
 		local character, humanoid, head, root
 
 
-		local team_check, dead_check, dist_check, npc_check = main_settings.team_check, main_settings.dead_check, main_settings.dist_check, main_settings.npc_check
+		local team_check, dead_check, dist_check, npc_check, visible_check = main_settings.team_check, main_settings.dead_check, main_settings.dist_check, main_settings.npc_check, main_settings.visible_check
 		local skeleton_rate = main_settings.skeleton_rate <= 0 and 1e-10 or main_settings.skeleton_rate
 		local max_distance, update_skeleton = main_settings.max_distance, settings.skeleton
 		local weapon_enabled, box_rotation = settings.weapon, settings.box_rotation
@@ -5699,7 +5835,7 @@ LPH_NO_VIRTUALIZE(function()
 		local cham_vis_ok = true
 
 		function plr:forceupdate()
-			team_check, dead_check, dist_check, npc_check = main_settings.team_check, main_settings.dead_check, main_settings.dist_check, main_settings.npc_check
+			team_check, dead_check, dist_check, npc_check, visible_check = main_settings.team_check, main_settings.dead_check, main_settings.dist_check, main_settings.npc_check, main_settings.visible_check
 			skeleton_rate = main_settings.skeleton_rate <= 0 and 1e-10 or main_settings.skeleton_rate
 			max_distance, update_skeleton = main_settings.max_distance, settings.skeleton
 			weapon_enabled, box_rotation = settings.weapon, settings.box_rotation
@@ -5896,6 +6032,10 @@ LPH_NO_VIRTUALIZE(function()
 			end
 
 			if (dist_check) and (humanoid_distance > max_distance) then
+				return plr:togglevis(false)
+			end
+
+			if (visible_check) and not cheat.is_pos_visible(camera_position, root.Position, character) then
 				return plr:togglevis(false)
 			end
 
@@ -6696,7 +6836,10 @@ do
 				old_health = new_health
 			end
 		end)
-		player_object.friend = player:IsFriendsWith(LocalPlayer.UserId)
+		local ok_friend, is_friend = pcall(function()
+			return player:IsFriendsWith(LocalPlayer.UserId)
+		end)
+		player_object.friend = ok_friend and is_friend or false
 	end
 
 	for _, player in Players:GetPlayers() do
@@ -6720,9 +6863,28 @@ do
 	end))
 
 	local lp = player_list[LocalPlayer]
+	local clan_cache, clan_cache_tick = {}, 0
+	local function clan_of(name)
+		local now = os.clock()
+		if now - clan_cache_tick > 2 then
+			clan_cache_tick = now
+			table.clear(clan_cache)
+			local clans = game:GetService("ReplicatedStorage"):FindFirstChild("Clans")
+			if clans then
+				for _, clan in clans:GetChildren() do
+					for _, member in clan:GetChildren() do
+						clan_cache[member.Name] = clan.Name
+					end
+				end
+			end
+		end
+		return clan_cache[name]
+	end
 	cheat.EspLibrary.get_team = LPH_NO_VIRTUALIZE(function(player, character, humanoid)
-		local tp = player_list[player]
-		return tp and lp.current_clan and tp.current_clan and lp.current_clan == tp.current_clan
+		if not player or player == LocalPlayer then return true end
+		local mine = clan_of(LocalPlayer.Name)
+		local his = clan_of(player.Name)
+		return mine ~= nil and mine == his
 	end)
 
 	cheat.EspLibrary.get_gun = LPH_NO_VIRTUALIZE(function(player, character, humanoid)
@@ -6744,6 +6906,7 @@ local ui = {
 ui.tabs = {
 	combat = ui.window:Tab({name = "Combat", image = Images.Get("combat")}),
 	visuals = ui.window:Tab({name = "Visuals", image = Images.Get("visuals")}),
+		skins = ui.window:Tab({name = "Skins", image = "rbxassetid://17415964540", size = 76}),
 	misc = ui.window:Tab({name = "Misc", image = Images.Get("misc")}),
 	settings = ui.window:Tab({name = "Settings", image = Images.Get("config")})
 }
@@ -6758,6 +6921,8 @@ ui.subtabs = {
 	misc_antiaim = ui.tabs.misc:SubTab({Name = "Anti-aim"}),
 	misc_exploit = ui.tabs.misc:SubTab({Name = "Exploits"}),
 	settings_main = ui.tabs.settings:SubTab({Name = "Main"}),
+	skins_changer = ui.tabs.skins:SubTab({Name = "Skin Changer"}),
+	skins_weapon = ui.tabs.skins:SubTab({Name = "Weapon Editor"}),
 	settings_theme = ui.tabs.settings:SubTab({Name = "Themeing"})
 }
 ui.sections = {
@@ -6783,10 +6948,14 @@ ui.sections = {
 	custom_desync = ui.subtabs.misc_exploit:Section({Name = "Custom desync", Side = "Left"}),
 	exploit = ui.subtabs.misc_exploit:Section({Name = "Exploit", Side = "Right"}),
 
-	settings_config = ui.subtabs.settings_main:Section({Name = "Config", Side = "Left"}),
-	settings_personalization = ui.subtabs.settings_main:Section({Name = "Personalization", Side = "Right"}),
+	settings_config = ui.subtabs.settings_main:Section({Name = "Config", Side = "Left"}),	settings_personalization = ui.subtabs.settings_main:Section({Name = "Personalization", Side = "Right"}),
 	theme_config = ui.subtabs.settings_theme:Section({Name = "Config", Side = "Left"}),
-	theme_colors = ui.subtabs.settings_theme:Section({Name = "Colors", Side = "Right"})
+	theme_colors = ui.subtabs.settings_theme:Section({Name = "Colors", Side = "Right"}),
+
+	skins_browser = ui.subtabs.skins_changer:Section({Name = "Weapons", Side = "Left"}),
+	skins_actions = ui.subtabs.skins_changer:Section({Name = "Skins", Side = "Right"}),
+	weapon_mods = ui.subtabs.skins_weapon:Section({Name = "Attachments", Side = "Left"}),
+	weapon_list = ui.subtabs.skins_weapon:Section({Name = "Weapons", Side = "Right"})
 }
 
 do
@@ -6794,8 +6963,30 @@ do
 
 	ui.subtabs.combat_aimbot.Set(true)
 	ui.subtabs.visuals_esp.Set(true)
+	ui.subtabs.skins_changer.Set(true)
 	ui.subtabs.misc_main.Set(true)
 	ui.subtabs.settings_main.Set(true)
+	do
+		local skins_tab = ui.tabs.skins
+		local skins_icon = skins_tab.Objects.icon
+		local skins_idle = Color3.fromHex("565656")
+		local skins_active = Color3.fromHex("ffffff")
+		Library.ThemeObjects[skins_icon] = nil
+		local skins_apply = function(status)
+			skins_icon.ImageColor3 = status and skins_active or skins_idle
+		end
+		local skins_set = skins_tab.Set
+		skins_tab.Set = function(status, nested)
+			skins_set(status, nested)
+			skins_apply(status)
+		end
+		local update_theme = Library.UpdateTheme
+		Library.UpdateTheme = function(theme, color)
+			update_theme(theme, color)
+			skins_apply(skins_tab.Selected)
+		end
+		skins_apply(skins_tab.Selected)
+	end
 end
 
 local hit_chances = {Head = 100, UpperTorso = 100}
@@ -6924,11 +7115,16 @@ end)
 
 local aimbot_mode = "Camera"
 local target_part, target_player, target_character
+cheat.feat = {ac_bypass = true, multibullet = false, hit_chams = false, kill_sound = false, resolver = false, bring_vehicle = false, flashlight_override = false, laser_override = false, manipulation = false, mine_manipulation = false, instant_nade = false, hover_loot = false, spotify = false}
 local silent_forcehit = false
 local instant_reload, instant_equip, instant_aim = false, false, false
 local hit_sound, hit_sound_instance, hit_sound_speed, hit_sound_volume = false, cheat.hitsounds["Bameware"], 1, 1
+local kill_sound, kill_sound_instance, kill_sound_volume, kill_sound_speed = false, cheat.hitsounds["Bameware"], 1, 1
 local hit_logs, hit_logs_duration = false, 0
-local no_recoil = false
+	local no_recoil = false
+	local no_spread = false
+	local no_bullet_drop = false
+	local instant_lean = false
 do
 	local aimsec = ui.sections.aimbot_main
 	local mscsec = ui.sections.aimbot_misc
@@ -6945,7 +7141,7 @@ do
 	local fov_show, fov_color, fov_outline, fov_size, fov_sides = false, Color3.new(1,1,1), false, 100, 67
 	local snapline_show, snapline_color = false, Color3.new(1,1,1)
 	local autoshoot, autoshoot_key, autowall = false, false, false
-	local hitscan_hitboxes = {"FaceHitBox", "HeadTopHitBox", "Head"}
+		local hitscan_hitboxes = {"FaceHitBox", "HeadTopHitBox", "Head"}
 
 	local indicator = cheat.IndicatorLibrary:new_indicator()
 
@@ -6954,7 +7150,7 @@ do
 
 		local aim_keybind; aim_keybind = aimsec:Toggle({Name = "Enabled", Value = false, Flag = "aimbot_enable", Callback = function(bool)
 			aimbot_enabled = bool
-		end}):Keybind({Name = "Aimbot", Mode = "Hold", Key = Enum.KeyCode.E, Value = false, Flag = "aimbot_enabled_keybind", Callback = function(bool)
+		end}):Keybind({Name = "Aimbot", Mode = "Hold", Key = Enum.KeyCode.E, Value = false, Flag = "aimbot_enabled_keybind", Link = "aimbot_enable", Callback = function(bool)
 			aimbot_enabled_key = aimbot_enabled and bool
 			aim_keybind.Set(aimbot_enabled_key, true)
 		end})
@@ -7014,6 +7210,47 @@ do
 		aimsec:Toggle({Name = "Angle resolver", Value = false, Flag = "angle_resolver", Callback = function(bool)
 			angle_resolver = bool
 		end})
+		local ugres_on, ugres_key, ugres_depth, ugres_sit = false, false, 30, false
+		local ugres_saved = nil
+		local ug_depth_slider, ug_sit_toggle = nil, nil
+		local ug_keybind; ug_keybind = aimsec:Toggle({Name = "Underground resolver", Value = false, Flag = "ugres_enabled", Callback = function(bool)
+			ugres_on = bool
+			if ug_depth_slider then ug_depth_slider.State(bool) end
+			if ug_sit_toggle then ug_sit_toggle.State(bool) end
+		end}):Keybind({Name = "Underground resolver", Mode = "Hold", Key = Enum.KeyCode.H, Value = false, Flag = "ugres_key", Link = "ugres_enabled", Callback = function(bool)
+			ugres_key = ugres_on and bool
+			ug_keybind.Set(ugres_key, true)
+		end})
+		ug_depth_slider = aimsec:Slider({Name = "Underground depth", Min = 5, Max = 100, Float = 1, Value = 30, Flag = "ugres_depth", Callback = function(int)
+			ugres_depth = int
+		end})
+		ug_depth_slider.State(false)
+		ug_sit_toggle = aimsec:Toggle({Name = "Underground sit", Value = false, Flag = "ugres_sit", Callback = function(bool)
+			ugres_sit = bool
+		end})
+		ug_sit_toggle.State(false)
+		cheat.utility.new_renderstepped(function()
+			local active = ugres_on and ugres_key
+			local char = LocalPlayer.Character
+			local hrp = char and _FindFirstChild(char, "HumanoidRootPart")
+			local hum = char and _FindFirstChildOfClass(char, "Humanoid")
+			if active and hrp and hum and hum.Health > 0 then
+				if not ugres_saved then
+					ugres_saved = hrp.CFrame
+					if ugres_sit then pcall(function() hum.Sit = true end) end
+				end
+				hrp.CFrame = ugres_saved - _Vector3new(0, ugres_depth, 0)
+				hrp.AssemblyLinearVelocity = Vector3.zero
+				hrp.AssemblyAngularVelocity = Vector3.zero
+			elseif ugres_saved then
+				if hrp then
+					hrp.CFrame = ugres_saved
+					hrp.AssemblyLinearVelocity = Vector3.zero
+				end
+				if hum then pcall(function() hum.Sit = false end) end
+				ugres_saved = nil
+			end
+		end)
 
 		local player_list = cheat.player_list
 		RunService.PreRender:Connect(LPH_JIT(function()
@@ -7072,7 +7309,7 @@ do
 
 		local autoshoot_keybind; autoshoot_keybind = mscsec:Toggle({Name = "Silent auto-shoot", Value = false, Flag = "aimbot_autoshoot", Callback = function(bool)
 			autoshoot = bool
-		end}):Keybind({Name = "Auto-shoot", Mode = "Toggle", Key = Enum.KeyCode.G, Value = false, Flag = "aimbot_autoshoot_keybind", Callback = function(bool)
+		end}):Keybind({Name = "Auto-shoot", Mode = "Toggle", Key = Enum.KeyCode.G, Value = false, Flag = "aimbot_autoshoot_keybind", Link = "aimbot_autoshoot", Callback = function(bool)
 			autoshoot_key = autoshoot and bool
 			autoshoot_keybind.Set(autoshoot_key, true)
 		end})
@@ -7080,6 +7317,163 @@ do
 		mscsec:Toggle({Name = "Auto-wall penetration", Value = false, Flag = "silent_autowall", Callback = function(bool)
 			autowall = bool
 		end})
+
+		local tpkill_on, tpkill_height, tpkill_saved, tpkill_target, tpkill_platform, tpkill_cd = false, 200, nil, nil, nil, 0
+		local tpkill_uptime, tpkill_cooldown, tpkill_face, tpkill_track, tpkill_go = 3, 6, false, false, 0
+		local tpkill_toggle
+		local function tpkill_find()
+			local mouse = UserInputService:GetMouseLocation()
+			local campos = Camera.CFrame.Position
+			local fov = cheat.aim_fov or 120
+			local best_part, best_score = nil, math.huge
+			for _, player in Players:GetPlayers() do
+				if player ~= LocalPlayer and player.Character then
+					local hum = _FindFirstChildOfClass(player.Character, "Humanoid")
+					local part = _FindFirstChild(player.Character, "HumanoidRootPart") or _FindFirstChild(player.Character, "UpperTorso") or _FindFirstChild(player.Character, "Head")
+					if hum and hum.Health > 0 and part then
+						local sp, on = _WorldToViewportPoint(Camera, part.Position)
+						if on then
+							local d = (_Vector2new(sp.X, sp.Y) - mouse).Magnitude
+							if d <= fov then
+								local mdist = (campos - part.Position).Magnitude
+								if mdist < 600 then
+									local score = d + mdist * 0.4
+									if score < best_score then
+										best_score = score
+										best_part = part
+									end
+								end
+							end
+						end
+					end
+				end
+			end
+			return best_part
+		end
+		local function tpkill_launch(tgt, hrp, char)
+			tpkill_target = tgt
+			tpkill_saved = hrp.CFrame
+			tpkill_go = tick()
+			tpkill_platform = Instance.new("Part")
+			tpkill_platform.Size = _Vector3new(10, 1, 10)
+			tpkill_platform.Anchored = true
+			tpkill_platform.CanCollide = true
+			tpkill_platform.Transparency = 1
+			tpkill_platform.Name = "TPKillPlatform"
+			tpkill_platform.Parent = char
+			hrp.CFrame = _CFramenew(tgt.Position + _Vector3new(0, tpkill_height, 0)) * (hrp.CFrame - hrp.CFrame.Position)
+			Library.Notification("TP Kill: Teleported above targeted enemy", 2.5)
+		end
+		local function tpkill_set(state)
+			if tpkill_on == state then return end
+			tpkill_on = state
+			local char = LocalPlayer.Character
+			local hrp = char and _FindFirstChild(char, "HumanoidRootPart")
+			if not hrp then return end
+			if not state then
+				if tpkill_saved then
+					tpkill_cd = tick()
+				end
+				if tpkill_saved then
+					hrp.CFrame = tpkill_saved + _Vector3new(0, 2, 0)
+					tpkill_saved = nil
+					tpkill_target = nil
+					Library.Notification("TP Kill: Returned to original position", 2.5)
+					if tpkill_platform then
+						pcall(function() tpkill_platform:Destroy() end)
+						tpkill_platform = nil
+					end
+					local hum = _FindFirstChildOfClass(char, "Humanoid")
+					if hum then
+						hum:ChangeState(Enum.HumanoidStateType.Landed)
+					end
+					hrp.AssemblyLinearVelocity = Vector3.zero
+				end
+			else
+				if tick() - tpkill_cd < tpkill_cooldown then
+					tpkill_on = false
+					tpkill_toggle.Set(false)
+					Library.Notification("TP Kill: On cooldown!", 2.5)
+					return
+				end
+				local tgt = tpkill_find()
+				if not tgt then
+					tpkill_go = tick()
+					Library.Notification("TP Kill: Armed, waiting for target in FOV", 2.5)
+				else
+					tpkill_launch(tgt, hrp, char)
+				end
+			end
+		end
+		local tpkill_height_slider, tpkill_uptime_slider, tpkill_cd_slider, tpkill_face_toggle, tpkill_track_toggle = nil, nil, nil, nil, nil
+		tpkill_toggle = mscsec:Toggle({Name = "TP kill", Value = false, Flag = "tpkill", Callback = function(bool)
+			tpkill_set(bool)
+			if not tpkill_on and tpkill_keybind then tpkill_keybind.Set(false, true) end
+			local vis = tpkill_on and true or false
+			if tpkill_height_slider then tpkill_height_slider.State(vis) end
+			if tpkill_uptime_slider then tpkill_uptime_slider.State(vis) end
+			if tpkill_cd_slider then tpkill_cd_slider.State(vis) end
+			if tpkill_face_toggle then tpkill_face_toggle.State(vis) end
+			if tpkill_track_toggle then tpkill_track_toggle.State(vis) end
+		end})
+		local tpkill_keybind; tpkill_keybind = tpkill_toggle:Keybind({Name = "TP kill", Mode = "Toggle", Modes = {"Hold", "Toggle"}, Key = Enum.KeyCode.T, Value = false, Flag = "tpkill_key", Link = "tpkill", Callback = function(bool)
+			tpkill_toggle.Set(bool)
+			tpkill_keybind.Set(bool, true)
+		end})
+		tpkill_height_slider = mscsec:Slider({Name = "TP kill height", Min = 5, Max = 300, Float = 1, Value = 200, Flag = "tpkill_height", Callback = function(int)
+			tpkill_height = int
+			if tpkill_on and tpkill_target and tpkill_target.Parent then
+				local char = LocalPlayer.Character
+				local hrp = char and _FindFirstChild(char, "HumanoidRootPart")
+				if hrp then
+					hrp.CFrame = _CFramenew(tpkill_target.Position + _Vector3new(0, tpkill_height, 0)) * (hrp.CFrame - hrp.CFrame.Position)
+				end
+			end
+		end})
+		tpkill_height_slider.State(false)
+		tpkill_uptime_slider = mscsec:Slider({Name = "TP kill uptime", Min = 0.5, Max = 15, Float = 0.1, Value = 3, Flag = "tpkill_uptime", Suffix = "%ss", Callback = function(int)
+			tpkill_uptime = int
+		end})
+		tpkill_uptime_slider.State(false)
+		tpkill_cd_slider = mscsec:Slider({Name = "TP kill cooldown", Min = 0, Max = 30, Float = 1, Value = 6, Flag = "tpkill_cooldown", Suffix = "%ss", Callback = function(int)
+			tpkill_cooldown = int
+		end})
+		tpkill_cd_slider.State(false)
+		tpkill_face_toggle = mscsec:Toggle({Name = "TP kill face target", Value = false, Flag = "tpkill_face", Callback = function(bool)
+			tpkill_face = bool
+		end})
+		tpkill_face_toggle.State(false)
+		tpkill_track_toggle = mscsec:Toggle({Name = "TP kill track target", Value = false, Flag = "tpkill_track", Callback = function(bool)
+			tpkill_track = bool
+		end})
+		tpkill_track_toggle.State(false)
+		cheat.utility.new_renderstepped(function()
+			if not tpkill_on then return end
+			local char = LocalPlayer.Character
+			local hrp = char and _FindFirstChild(char, "HumanoidRootPart")
+			if not hrp then return end
+			if not (tpkill_target and tpkill_target.Parent) then
+				if tick() - tpkill_go > 0.5 then
+					tpkill_go = tick()
+					local tgt = tpkill_find()
+					if tgt then
+						tpkill_launch(tgt, hrp, char)
+					end
+				end
+				return
+			end
+			if tick() - tpkill_go > tpkill_uptime then
+				tpkill_toggle.Set(false)
+				return
+			end
+			if tpkill_track then
+				hrp.CFrame = _CFramenew(tpkill_target.Position + _Vector3new(0, tpkill_height, 0)) * (hrp.CFrame - hrp.CFrame.Position)
+				hrp.AssemblyLinearVelocity = _Vector3new(0, 0, 0)
+			end
+			if tpkill_face then
+				Camera.CFrame = _CFramenew(Camera.CFrame.Position, tpkill_target.Position)
+			end
+		end)
 
 		mscsec:Dropdown({Name = "Auto-shoot hitscan", Values = {
 			"FaceHitBox",
@@ -7114,7 +7508,7 @@ do
 		do
 			local holdbullets_keybind; holdbullets_keybind = mscsec:Toggle({Name = "Hold bullets", Value = false, Flag = "aimbot_holdbullets", Callback = function(bool)
 				holdbullets = bool
-			end}):Keybind({Name = "fye \240\159\169\184\240\159\169\184\240\159\169\184", Mode = "Toggle", Key = Enum.KeyCode.X, Value = false, Flag = "aimbot_holdbullets_keybind", Callback = function(bool)
+			end}):Keybind({Name = "Hold bullets", Mode = "Toggle", Key = Enum.KeyCode.X, Value = false, Flag = "aimbot_holdbullets_keybind", Link = "aimbot_holdbullets", Callback = function(bool)
 				holdbullets_key = holdbullets and bool
 				holdbullets_keybind.Set(holdbullets_key, true)
 			end})
@@ -7139,22 +7533,376 @@ do
 		local bullet_tracers, bullet_tracers_color = false, Color3.new(1, 1, 1)
 
 
-		effsec:Toggle({Name = "Aimbot FOV", Value = false, Flag = "fov_enabled", Callback = function(bool)
+		local fov_outline_toggle, fov_sides_slider = nil, nil
+		local fov_toggle = effsec:Toggle({Name = "Aimbot fov", Value = false, Flag = "fov_enabled", Callback = function(bool)
 			fov_show = bool
-		end}):Colorpicker({Name = "FOV Color", Value = Color3.new(1, 1, 1), Usealpha = false, Flag = "fov_color", Callback = function(color)
+			local vis = bool and true or false
+			if fov_outline_toggle then fov_outline_toggle.State(vis) end
+			if fov_sides_slider then fov_sides_slider.State(vis) end
+		end})
+		fov_toggle:Colorpicker({Name = "FOV color", Value = Color3.new(1, 1, 1), Usealpha = false, Flag = "fov_color", Callback = function(color)
 			fov_color = color.c
 		end})
-		effsec:Toggle({Name = "FOV Outline", Value = false, Flag = "fov_outline", Callback = function(bool)
+		fov_outline_toggle = effsec:Toggle({Name = "FOV outline", Value = false, Flag = "fov_outline", Callback = function(bool)
 			fov_outline = bool
 		end})
-		effsec:Slider({Name = "FOV Sides", Min = 3, Max = 100, Float = 1, Value = 67, Flag = "fov_sides", Suffix = "%s", Callback = function(int)
+		fov_outline_toggle.State(false)
+		fov_sides_slider = effsec:Slider({Name = "FOV sides", Min = 3, Max = 100, Float = 1, Value = 67, Flag = "fov_sides", Suffix = "%s", Callback = function(int)
 			fov_sides = int
 		end})
+		fov_sides_slider.State(false)
 		effsec:Toggle({Name = "Snapline", Value = false, Flag = "fov_snapline", Callback = function(bool)
 			snapline_show = bool
 		end}):Colorpicker({Name = "Snapline color", Value = Color3.new(1, 1, 1), Usealpha = false, Flag = "fov_snapline_color", Callback = function(color)
 			snapline_color = color.c
 		end})
+
+		cheat.crosshair = false
+		cheat.crosshair_color = Color3.fromRGB(0, 255, 150)
+		cheat.crosshair_pos = "Center"
+		cheat.crosshair_tween = false
+		cheat.crosshair_tween_speed = 10
+		cheat.crosshair_len = 6
+		cheat.crosshair_thick = 1
+		cheat.crosshair_gap = 3
+		cheat.crosshair_op = 100
+		cheat.crosshair_outline = false
+		cheat.crosshair_outline_color = Color3.fromRGB(0, 0, 0)
+		cheat.crosshair_spin = false
+		cheat.crosshair_spin_speed = 3
+		local cross_pos_dropdown, cross_tween_toggle, cross_tweenspeed_slider, cross_len_slider, cross_thick_slider, cross_gap_slider, cross_op_slider, cross_outline_toggle, cross_spin_toggle, cross_spinspeed_slider = nil, nil, nil, nil, nil, nil, nil, nil, nil, nil
+		local cross_toggle = effsec:Toggle({Name = "Custom crosshair", Value = false, Flag = "crosshair_enabled", Callback = function(bool)
+			cheat.crosshair = bool
+			local vis = bool and true or false
+			if cross_pos_dropdown then cross_pos_dropdown.State(vis) end
+			if cross_tween_toggle then cross_tween_toggle.State(vis) end
+			if cross_tweenspeed_slider then cross_tweenspeed_slider.State(vis) end
+			if cross_len_slider then cross_len_slider.State(vis) end
+			if cross_thick_slider then cross_thick_slider.State(vis) end
+			if cross_gap_slider then cross_gap_slider.State(vis) end
+			if cross_op_slider then cross_op_slider.State(vis) end
+			if cross_outline_toggle then cross_outline_toggle.State(vis) end
+			if cross_spin_toggle then cross_spin_toggle.State(vis) end
+			if cross_spinspeed_slider then cross_spinspeed_slider.State(vis) end
+		end})
+		cross_toggle:Colorpicker({Name = "Crosshair color", Value = Color3.fromRGB(0, 255, 150), Usealpha = false, Flag = "crosshair_color", Callback = function(color)
+			cheat.crosshair_color = color.c
+		end})
+		cross_pos_dropdown = effsec:Dropdown({Name = "Crosshair position", Values = {"Center", "Mouse", "Target"}, Value = "Center", Flag = "crosshair_pos", Multi = false, Callback = function(str)
+			cheat.crosshair_pos = str
+		end})
+		cross_pos_dropdown.State(false)
+		cross_tween_toggle = effsec:Toggle({Name = "Crosshair tween", Value = false, Flag = "crosshair_tween", Callback = function(bool)
+			cheat.crosshair_tween = bool
+		end})
+		cross_tween_toggle.State(false)
+		cross_tweenspeed_slider = effsec:Slider({Name = "Crosshair tween speed", Min = 1, Max = 30, Float = 1, Value = 10, Flag = "crosshair_tween_speed", Callback = function(int)
+			cheat.crosshair_tween_speed = int
+		end})
+		cross_tweenspeed_slider.State(false)
+		cross_len_slider = effsec:Slider({Name = "Crosshair length", Min = 1, Max = 60, Float = 1, Value = 6, Flag = "crosshair_length", Callback = function(int)
+			cheat.crosshair_len = int
+		end})
+		cross_len_slider.State(false)
+		cross_thick_slider = effsec:Slider({Name = "Crosshair thickness", Min = 1, Max = 12, Float = 1, Value = 1, Flag = "crosshair_thickness", Callback = function(int)
+			cheat.crosshair_thick = int
+		end})
+		cross_thick_slider.State(false)
+		cross_gap_slider = effsec:Slider({Name = "Crosshair gap", Min = 0, Max = 10, Float = 1, Value = 3, Flag = "crosshair_gap", Callback = function(int)
+			cheat.crosshair_gap = int
+		end})
+		cross_gap_slider.State(false)
+		cross_op_slider = effsec:Slider({Name = "Crosshair opacity", Min = 0, Max = 100, Float = 1, Value = 100, Flag = "crosshair_opacity", Callback = function(int)
+			cheat.crosshair_op = int
+		end})
+		cross_op_slider.State(false)
+		cross_outline_toggle = effsec:Toggle({Name = "Crosshair outline", Value = false, Flag = "crosshair_outline", Callback = function(bool)
+			cheat.crosshair_outline = bool
+		end})
+		cross_outline_toggle:Colorpicker({Name = "Outline color", Value = Color3.fromRGB(0, 0, 0), Usealpha = false, Flag = "crosshair_outline_color", Callback = function(color)
+			cheat.crosshair_outline_color = color.c
+		end})
+		cross_outline_toggle.State(false)
+		cross_spin_toggle = effsec:Toggle({Name = "Crosshair spin", Value = false, Flag = "crosshair_spin", Callback = function(bool)
+			cheat.crosshair_spin = bool
+		end})
+		cross_spin_toggle.State(false)
+		cross_spinspeed_slider = effsec:Slider({Name = "Crosshair spin speed", Min = 0.1, Max = 20, Float = 0.1, Value = 3, Flag = "crosshair_spin_speed", Callback = function(int)
+			cheat.crosshair_spin_speed = int
+		end})
+		cross_spinspeed_slider.State(false)
+		do
+			local ch_gui = Instance.new("ScreenGui")
+			ch_gui.Name = "SwimCrosshair"
+			ch_gui.ResetOnSpawn = false
+			ch_gui.IgnoreGuiInset = true
+			ch_gui.DisplayOrder = 10
+			ch_gui.Parent = game:GetService("CoreGui")
+			local ch_root = Instance.new("Frame")
+			ch_root.AnchorPoint = Vector2.new(0.5, 0.5)
+			ch_root.Size = UDim2.fromOffset(1, 1)
+			ch_root.Position = UDim2.fromScale(0.5, 0.5)
+			ch_root.BackgroundTransparency = 1
+			ch_root.BorderSizePixel = 0
+			ch_root.Parent = ch_gui
+			local arms = {}
+			for _, side in {"Top", "Right", "Bottom", "Left"} do
+				local f = Instance.new("Frame")
+				f.Name = side
+				f.BorderSizePixel = 0
+				f.Parent = ch_root
+				local s = Instance.new("UIStroke")
+				s.Thickness = 1
+				s.Parent = f
+				arms[side] = {f = f, s = s}
+			end
+			local ch_pos = _Vector2new(0, 0)
+			local ch_rot = 0
+			local ch_style = {}
+			local function muzzle_part()
+				local vm = Camera and Camera:FindFirstChildOfClass("Model")
+				local item = vm and _FindFirstChild(vm, "Item")
+				local m = item and _FindFirstChild(item, "Muzzle")
+				if m then return m end
+				local ch = LocalPlayer.Character
+				local tool = ch and _FindFirstChildOfClass(ch, "Tool")
+				return tool and _FindFirstChild(tool, "Muzzle")
+			end
+			cheat.utility.new_renderstepped(function(delta)
+				if not cheat.crosshair then
+					ch_root.Visible = false
+					return
+				end
+				ch_root.Visible = true
+				local len, th, gap = cheat.crosshair_len, cheat.crosshair_thick, cheat.crosshair_gap
+				local col, op = cheat.crosshair_color, 1 - cheat.crosshair_op / 100
+				local oon, ocol = cheat.crosshair_outline, cheat.crosshair_outline_color
+				if ch_style.len ~= len or ch_style.th ~= th or ch_style.gap ~= gap or ch_style.col ~= col or ch_style.op ~= op or ch_style.oon ~= oon or ch_style.ocol ~= ocol then
+					ch_style.len, ch_style.th, ch_style.gap, ch_style.col, ch_style.op, ch_style.oon, ch_style.ocol = len, th, gap, col, op, oon, ocol
+					arms.Top.f.Size = UDim2.new(0, th, 0, len)
+					arms.Bottom.f.Size = UDim2.new(0, th, 0, len)
+					arms.Left.f.Size = UDim2.new(0, len, 0, th)
+					arms.Right.f.Size = UDim2.new(0, len, 0, th)
+					local off = gap + len / 2
+					arms.Top.f.AnchorPoint = Vector2.new(0.5, 0.5)
+					arms.Bottom.f.AnchorPoint = Vector2.new(0.5, 0.5)
+					arms.Left.f.AnchorPoint = Vector2.new(0.5, 0.5)
+					arms.Right.f.AnchorPoint = Vector2.new(0.5, 0.5)
+					arms.Top.f.Position = UDim2.new(0.5, 0, 0.5, -off)
+					arms.Bottom.f.Position = UDim2.new(0.5, 0, 0.5, off)
+					arms.Left.f.Position = UDim2.new(0.5, -off, 0.5, 0)
+					arms.Right.f.Position = UDim2.new(0.5, off, 0.5, 0)
+					for _, side in {"Top", "Right", "Bottom", "Left"} do
+						arms[side].f.BackgroundColor3 = col
+						arms[side].f.BackgroundTransparency = op
+						arms[side].s.Enabled = oon
+						arms[side].s.Color = ocol
+					end
+				end
+				local vs = Camera.ViewportSize
+				local dest = _Vector2new(vs.X / 2, vs.Y / 2)
+				if cheat.crosshair_pos == "Mouse" then
+					dest = UserInputService:GetMouseLocation()
+				elseif cheat.crosshair_pos == "Target" then
+					local aim_point = (target_part and target_part.Parent) and target_part.Position or nil
+					if typeof(aimbot_part) == "table" and #aimbot_part > 1 and target_character then
+						local torso = _FindFirstChild(target_character, "UpperTorso") or _FindFirstChild(target_character, "LowerTorso") or _FindFirstChild(target_character, "HumanoidRootPart")
+						if torso then aim_point = torso.Position end
+					end
+					if aim_point then
+						local sp, on = _WorldToViewportPoint(Camera, aim_point)
+						if on then
+							dest = _Vector2new(sp.X, sp.Y)
+						end
+					end
+				end
+				if cheat.crosshair_tween then
+					local k = 1 - math.exp(-cheat.crosshair_tween_speed * (delta or 0.016))
+					ch_pos = ch_pos + (dest - ch_pos) * k
+				else
+					ch_pos = dest
+				end
+				ch_root.Position = UDim2.new(0, ch_pos.X, 0, ch_pos.Y)
+				if cheat.crosshair_spin then
+					ch_rot = (ch_rot + cheat.crosshair_spin_speed * delta * 60) % 360
+				else
+					ch_rot = 0
+				end
+				ch_root.Rotation = ch_rot
+			end)
+		end
+
+		cheat.hud = {
+			enabled = false,
+			show = {viewport = true, name = true, dist = true, vis = true, kdr = true, kd = true, reps = true, time = true, hp = true, guns = true, visor = true},
+			target = nil,
+			seen = {},
+			stat_cache = {name = nil, t = 0, kd = "?", kstr = "", hours = 0, reports = 0, visor = nil, tool = "NONE", tool_name = nil, tool_t = 0},
+			tick = 0
+		}
+		local hud_rows
+		do
+			local acc = Library.Theme.accent
+			cheat.hud.gui = Instance.new("ScreenGui")
+			cheat.hud.gui.Name = "TargetHUD"
+			cheat.hud.gui.DisplayOrder = 0
+			cheat.hud.gui.IgnoreGuiInset = true
+			cheat.hud.gui.ResetOnSpawn = false
+			cheat.hud.gui.Enabled = false
+			cheat.hud.gui.Parent = game:GetService("CoreGui")
+			local hud_w = 190
+			cheat.hud.w = hud_w
+			local outer = Instance.new("Frame")
+			outer.Name = "Panel"
+			local vp0 = Camera.ViewportSize
+			outer.Size = UDim2.fromOffset(hud_w, 120)
+			outer.Position = UDim2.fromOffset(math.max(vp0.X - hud_w - 24, 0), math.max(vp0.Y - 150, 0))
+			outer.BackgroundColor3 = Color3.fromRGB(19, 19, 19)
+			outer.BorderSizePixel = 0
+			outer.Active = true
+			outer.Parent = cheat.hud.gui
+			cheat.hud.outer = outer
+			cheat.hud.stroke = Instance.new("UIStroke")
+			cheat.hud.stroke.Thickness = 1
+			cheat.hud.stroke.Color = Color3.fromRGB(40, 42, 44)
+			cheat.hud.stroke.Parent = outer
+			do
+				local dragging = false
+				local grab = Vector2.new()
+				outer.InputBegan:Connect(function(input)
+					if input.UserInputType == Enum.UserInputType.MouseButton1 then
+						local p = input.Position - outer.AbsolutePosition
+						grab = Vector2.new(p.X, p.Y)
+						dragging = true
+					end
+				end)
+				UserInputService.InputChanged:Connect(function(input)
+					if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+						local vs = Camera.ViewportSize
+						local nx = math.clamp(input.Position.X - grab.X, 0, math.max(vs.X - outer.AbsoluteSize.X, 0))
+						local ny = math.clamp(input.Position.Y - grab.Y, 0, math.max(vs.Y - outer.AbsoluteSize.Y, 0))
+						outer.Position = UDim2.fromOffset(nx, ny)
+					end
+				end)
+				UserInputService.InputEnded:Connect(function(input)
+					if input.UserInputType == Enum.UserInputType.MouseButton1 then
+						dragging = false
+					end
+				end)
+			end
+			local strip = Instance.new("Frame")
+			strip.Name = "accent"
+			strip.Size = UDim2.fromOffset(2, 1)
+			strip.Position = UDim2.fromOffset(0, 0)
+			strip.BackgroundColor3 = acc
+			strip.BorderSizePixel = 0
+			strip.Parent = outer
+			cheat.hud.strip = strip
+			local avframe = Instance.new("Frame")
+			avframe.Name = "avatar"
+			avframe.Position = UDim2.fromOffset(10, 8)
+			avframe.Size = UDim2.fromOffset(26, 26)
+			avframe.BackgroundColor3 = Color3.fromRGB(40, 42, 44)
+			avframe.BorderSizePixel = 0
+			avframe.Parent = outer
+			cheat.hud.av = Instance.new("ImageLabel")
+			cheat.hud.av.Position = UDim2.fromOffset(1, 1)
+			cheat.hud.av.Size = UDim2.fromOffset(24, 24)
+			cheat.hud.av.BackgroundColor3 = Color3.fromRGB(28, 28, 28)
+			cheat.hud.av.BorderSizePixel = 0
+			cheat.hud.av.ScaleType = Enum.ScaleType.Crop
+			cheat.hud.av.Image = ""
+			cheat.hud.av.Parent = avframe
+			cheat.hud.avframe = avframe
+			cheat.hud.rows = {}
+			for i = 1, 9 do
+				local bg = Instance.new("Frame")
+				bg.BackgroundColor3 = Color3.fromRGB(40, 42, 44)
+				bg.BorderSizePixel = 0
+				bg.Size = UDim2.fromOffset(140, 13)
+				bg.Visible = false
+				bg.Parent = outer
+				local lbl = Instance.new("TextLabel")
+				lbl.BackgroundTransparency = 1
+				lbl.FontFace = Fonts.Get("TahomaXP")
+				lbl.TextSize = 10
+				lbl.TextXAlignment = Enum.TextXAlignment.Left
+				lbl.TextColor3 = Color3.fromRGB(150, 150, 150)
+				lbl.TextStrokeTransparency = 1
+				lbl.Position = UDim2.fromOffset(5, 0)
+				lbl.Size = UDim2.new(1, -10, 1, 0)
+				lbl.Parent = bg
+				local val = Instance.new("TextLabel")
+				val.BackgroundTransparency = 1
+				val.FontFace = Fonts.Get("TahomaXP")
+				val.TextSize = 10
+				val.TextXAlignment = Enum.TextXAlignment.Right
+				val.TextColor3 = Color3.fromRGB(230, 230, 230)
+				val.TextStrokeTransparency = 1
+				val.TextTruncate = Enum.TextTruncate.AtEnd
+				val.Position = UDim2.fromOffset(5, 0)
+				val.Size = UDim2.new(1, -10, 1, 0)
+				val.Parent = bg
+				bg.MouseEnter:Connect(function() bg.BackgroundColor3 = Color3.fromRGB(50, 52, 54) end)
+				bg.MouseLeave:Connect(function() bg.BackgroundColor3 = Color3.fromRGB(40, 42, 44) end)
+				cheat.hud.rows[i] = {bg = bg, lbl = lbl, val = val}
+			end
+			local hpbg = Instance.new("Frame")
+			hpbg.BackgroundColor3 = Color3.fromRGB(40, 42, 44)
+			hpbg.BorderSizePixel = 0
+			hpbg.Size = UDim2.fromOffset(140, 13)
+			hpbg.Visible = false
+			hpbg.ClipsDescendants = true
+			hpbg.Parent = outer
+			cheat.hud.hp_fill = Instance.new("Frame")
+			cheat.hud.hp_fill.Size = UDim2.new(1, 0, 1, 0)
+			cheat.hud.hp_fill.BackgroundColor3 = Color3.fromRGB(75, 215, 95)
+			cheat.hud.hp_fill.BorderSizePixel = 0
+			cheat.hud.hp_fill.Parent = hpbg
+			cheat.hud.hp_t = Instance.new("TextLabel")
+			cheat.hud.hp_t.Size = UDim2.new(1, -10, 1, 0)
+			cheat.hud.hp_t.BackgroundTransparency = 1
+			cheat.hud.hp_t.FontFace = Fonts.Get("TahomaXP")
+			cheat.hud.hp_t.TextSize = 10
+			cheat.hud.hp_t.Position = UDim2.fromOffset(5, 0)
+			cheat.hud.hp_t.TextXAlignment = Enum.TextXAlignment.Right
+			cheat.hud.hp_t.TextColor3 = Color3.fromRGB(255, 255, 255)
+			cheat.hud.hp_t.TextStrokeTransparency = 1
+			cheat.hud.hp_t.Text = ""
+			cheat.hud.hp_t.Parent = hpbg
+			cheat.hud.hp_bg = hpbg
+		end
+		local hud_elements_dropdown = nil
+		local hud_toggle = effsec:Toggle({Name = "Target hud", Value = false, Flag = "hud_enabled", Callback = function(bool)
+			cheat.hud.enabled = bool
+			if hud_elements_dropdown then hud_elements_dropdown.State(bool) end
+		end})
+		local hud_element_keys = {
+			["Avatar"] = "viewport",
+			["Name"] = "name",
+			["Distance"] = "dist",
+			["Vis"] = "vis",
+			["KDR"] = "kdr",
+			["KD"] = "kd",
+			["Reports"] = "reps",
+			["Time"] = "time",
+			["Health"] = "hp",
+			["Weapons"] = "guns",
+			["Visor"] = "visor"
+		}
+		hud_elements_dropdown = effsec:Dropdown({Name = "HUD elements", Values = {"Avatar", "Name", "Distance", "Vis", "KDR", "KD", "Reports", "Time", "Health", "Weapons", "Visor"}, Value = {"Avatar", "Name", "Distance", "Vis", "KDR", "KD", "Reports", "Time", "Health", "Weapons", "Visor"}, Flag = "hud_elements", Multi = true, Callback = function(tbl)
+			for k, _ in cheat.hud.show do
+				cheat.hud.show[k] = false
+			end
+			for _, name in tbl do
+				local key = hud_element_keys[name]
+				if key then
+					cheat.hud.show[key] = true
+				end
+			end
+		end})
+		hud_elements_dropdown.State(false)
+
 
 		do
 			local inventory_holder = Instance.new("Frame")
@@ -7174,6 +7922,7 @@ do
 			inventory_text.Position = UDim2.new(0, 2, 0, 0)
 			inventory_text.FontFace = default_font
 			inventory_text.Text = ""
+			inventory_text.RichText = true
 			inventory_text.TextColor3 = Color3.new(1, 1, 1)
 			inventory_text.TextSize = 9
 			inventory_text.TextStrokeTransparency = 0
@@ -7181,17 +7930,26 @@ do
 			inventory_text.TextYAlignment = Enum.TextYAlignment.Top
 
 
-			effsec:Toggle({Name = "Inventory viewer", Value = false, Flag = "inventory_viewer", Callback = function(bool)
+			local inv_bg_picker, inv_font_dropdown, inv_size_slider, inv_x_slider, inv_y_slider = nil, nil, nil, nil, nil
+			local inv_toggle = effsec:Toggle({Name = "Inventory viewer", Value = false, Flag = "inventory_viewer", Callback = function(bool)
 				inventory_holder.Visible = bool
-			end}):Colorpicker({Name = "Viewer Color", Value = Color3.new(1, 1, 1), Usealpha = true, Flag = "inventory_viewer_color", Callback = function(color)
+				local vis = bool and true or false
+				if inv_bg_picker then inv_bg_picker.State(vis) end
+				if inv_font_dropdown then inv_font_dropdown.State(vis) end
+				if inv_size_slider then inv_size_slider.State(vis) end
+				if inv_x_slider then inv_x_slider.State(vis) end
+				if inv_y_slider then inv_y_slider.State(vis) end
+			end})
+			inv_toggle:Colorpicker({Name = "Viewer color", Value = Color3.new(1, 1, 1), Usealpha = true, Flag = "inventory_viewer_color", Callback = function(color)
 				inventory_text.TextColor3 = color.c
 				inventory_text.TextTransparency = color.a
 			end})
-			effsec:Colorpicker({Name = "Background", Value = Color3.new(), Alpha = 0.7, Usealpha = true, Flag = "inventory_viewer_background", Callback = function(color)
+			inv_bg_picker = effsec:Colorpicker({Name = "Background", Value = Color3.new(), Alpha = 0.7, Usealpha = true, Flag = "inventory_viewer_background", Callback = function(color)
 				inventory_holder.BackgroundColor3 = color.c
 				inventory_holder.BackgroundTransparency = color.a
 			end})
-			effsec:Dropdown({Name = "Viewer font", Values = {
+			inv_bg_picker.State(false)
+			inv_font_dropdown = effsec:Dropdown({Name = "Viewer font", Values = {
 				"Tahoma",
 				"TahomaXP",
 				"Comfortaa",
@@ -7201,18 +7959,29 @@ do
 			}, Value = {"SmallestPixel7"}, Flag = "inventory_viewer_font", Multi = false, Callback = function(str)
 					inventory_text.FontFace = Fonts.Get(str or "SmallestPixel7") or default_font
 				end})
-			effsec:Slider({Name = "Viewer size", Min = 1, Max = 30, Float = 1, Value = 9, Flag = "inventory_viewer_size", Suffix = "%spx", Callback = function(int)
+			inv_font_dropdown.State(false)
+			inv_size_slider = effsec:Slider({Name = "Viewer size", Min = 1, Max = 30, Float = 1, Value = 9, Flag = "inventory_viewer_size", Suffix = "%spx", Callback = function(int)
 				inventory_text.TextSize = int
 			end})
-			effsec:Slider({Name = "Viewer X", Min = 0, Max = 100, Float = 1, Value = 5, Flag = "inventory_viewer_x", Suffix = "%s%%", Callback = function(int)
+			inv_size_slider.State(false)
+			inv_x_slider = effsec:Slider({Name = "Viewer X", Min = 0, Max = 100, Float = 1, Value = 5, Flag = "inventory_viewer_x", Suffix = "%s%%", Callback = function(int)
 				inventory_holder.Position = UDim2.new(int / 100, -GuiInset.X, inventory_holder.Position.Y.Scale, -GuiInset.Y)
 			end})
-			effsec:Slider({Name = "Viewer Y", Min = 0, Max = 100, Float = 1, Value = 5, Flag = "inventory_viewer_y", Suffix = "%s%%", Callback = function(int)
+			inv_x_slider.State(false)
+			inv_y_slider = effsec:Slider({Name = "Viewer Y", Min = 0, Max = 100, Float = 1, Value = 5, Flag = "inventory_viewer_y", Suffix = "%s%%", Callback = function(int)
 				inventory_holder.Position = UDim2.new(inventory_holder.Position.X.Scale, -GuiInset.X, int / 100, -GuiInset.Y)
 
 			end})
+			inv_y_slider.State(false)
 
 			local player_list = cheat.player_list
+
+			local function flare_name(item_name)
+				if item_name == "FlareGun" then
+					return "<font color=\"rgb(255,60,60)\">FlareGun</font>"
+				end
+				return item_name
+			end
 
 			local weapon_slots = {
 				ItemBack1 = 1,
@@ -7339,28 +8108,28 @@ do
 
 				local text_buffer = ("%*'s Inventory\n"):format(player.Name)
 
-				text_buffer ..= "[Hotbar]\n"
-				for _, item in weapon do
-					text_buffer ..= ("\t%* - %* (%*%%)\n"):format(item[1], item[2], item[3])
-				end
+			text_buffer ..= "[Hotbar]\n"
+			for _, item in weapon do
+				text_buffer ..= ("\t%* - %* (%*%%)\n"):format(flare_name(item[1]), item[2], item[3])
+			end
 
-				text_buffer ..= "[Armor]\n"
-				for _, item in armor do
-					text_buffer ..= ("\t%*\n"):format(item[1])
-				end
+			text_buffer ..= "[Armor]\n"
+			for _, item in armor do
+				text_buffer ..= ("\t%*\n"):format(flare_name(item[1]))
+			end
 
-				text_buffer ..= "[Inventory]\n"
-				for _, item in inventoried do
-					text_buffer ..= ("\t%* =>\n"):format(item[1])
-					for subitem_name, subitem_amount in item[2] do
-						text_buffer ..= ("\t\t%* => %*x\n"):format(subitem_name, subitem_amount)
-					end
+			text_buffer ..= "[Inventory]\n"
+			for _, item in inventoried do
+				text_buffer ..= ("\t%* =>\n"):format(flare_name(item[1]))
+				for subitem_name, subitem_amount in item[2] do
+					text_buffer ..= ("\t\t%* => %*x\n"):format(flare_name(subitem_name), subitem_amount)
 				end
+			end
 
-				text_buffer ..= "[Other]\n"
-				for _, item in last do
-					text_buffer ..= ("\t%*\n"):format(item[1])
-				end
+			text_buffer ..= "[Other]\n"
+			for _, item in last do
+				text_buffer ..= ("\t%*\n"):format(flare_name(item[1]))
+			end
 
 
 
@@ -7392,22 +8161,28 @@ do
 
 		effsec:Toggle({Name = "Bullet tracers", Value = false, Flag = "bullet_tracers", Callback = function(bool)
 			bullet_tracers = bool
-		end}):Colorpicker({Name = "FOV Color", Value = Color3.new(1, 1, 1), Usealpha = false, Flag = "bullet_tracers_color", Callback = function(color)
+		end}):Colorpicker({Name = "FOV color", Value = Color3.new(1, 1, 1), Usealpha = false, Flag = "bullet_tracers_color", Callback = function(color)
 			bullet_tracers_color = color.c
 		end})
 
-		effsec:Toggle({Name = "Hit sound", Value = false, Flag = "hit_sound", Callback = function(bool)
+		local hitsound_volume_slider, hitsound_speed_slider, hitsound_selection_dropdown = nil, nil, nil
+		local hitsound_toggle = effsec:Toggle({Name = "Hit sound", Value = false, Flag = "hit_sound", Callback = function(bool)
 			hit_sound = bool
+			local vis = bool and true or false
+			if hitsound_volume_slider then hitsound_volume_slider.State(vis) end
+			if hitsound_speed_slider then hitsound_speed_slider.State(vis) end
+			if hitsound_selection_dropdown then hitsound_selection_dropdown.State(vis) end
 		end})
-
-		effsec:Slider({Name = "Hit sound volume", Min = 0.1, Max = 10, Float = 0.1, Value = 1, Flag = "hit_sound_volume", Suffix = "%s", Callback = function(int)
+		hitsound_volume_slider = effsec:Slider({Name = "Hit sound volume", Min = 0.1, Max = 10, Float = 0.1, Value = 1, Flag = "hit_sound_volume", Suffix = "%s", Callback = function(int)
 			hit_sound_volume = int
 		end})
-		effsec:Slider({Name = "Hit sound speed", Min = 0.1, Max = 3, Float = 0.1, Value = 1, Flag = "hit_sound_speed", Suffix = "%s", Callback = function(int)
+		hitsound_volume_slider.State(false)
+		hitsound_speed_slider = effsec:Slider({Name = "Hit sound speed", Min = 0.1, Max = 3, Float = 0.1, Value = 1, Flag = "hit_sound_speed", Suffix = "%s", Callback = function(int)
 			hit_sound_speed = int
 		end})
+		hitsound_speed_slider.State(false)
 
-		effsec:Dropdown({Name = "Hit sound selection", Values = (function()
+		hitsound_selection_dropdown = effsec:Dropdown({Name = "Hit sound selection", Values = (function()
 			local hitsounds = {}
 			for name, _ in cheat.hitsounds do
 				table.insert(hitsounds, name)
@@ -7416,29 +8191,69 @@ do
 		end)(), Value = "Bameware", Flag = "hit_sound_id", Multi = false, Callback = function(str)
 			hit_sound_instance = cheat.hitsounds[str]
 		end})
+		hitsound_selection_dropdown.State(false)
 
-		effsec:Toggle({Name = "Hit logs", Value = false, Flag = "hit_logs", Callback = function(bool)
-			hit_logs = bool
+		local killsound_selection_dropdown, killsound_volume_slider, killsound_speed_slider = nil, nil, nil
+		local killsound_toggle = effsec:Toggle({Name = "Kill sound", Value = false, Flag = "kill_sound", Callback = function(bool)
+			kill_sound = bool
+			cheat.feat.kill_sound = bool
+			local vis = bool and true or false
+			if killsound_selection_dropdown then killsound_selection_dropdown.State(vis) end
+			if killsound_volume_slider then killsound_volume_slider.State(vis) end
+			if killsound_speed_slider then killsound_speed_slider.State(vis) end
 		end})
-		effsec:Slider({Name = "Log duration", Min = 0, Max = 10, Float = 0.1, Value = 5, Flag = "hit_logs_duration", Suffix = "%ss", Callback = function(int)
+		killsound_selection_dropdown = effsec:Dropdown({Name = "Kill sound selection", Values = (function()
+			local hitsounds = {}
+			for name, _ in cheat.hitsounds do
+				table.insert(hitsounds, name)
+			end
+			return hitsounds
+		end)(), Value = "Bameware", Flag = "kill_sound_id", Multi = false, Callback = function(str)
+			kill_sound_instance = cheat.hitsounds[str]
+		end})
+		killsound_selection_dropdown.State(false)
+		killsound_volume_slider = effsec:Slider({Name = "Kill sound volume", Min = 0.1, Max = 10, Float = 0.1, Value = 1, Flag = "kill_sound_volume", Suffix = "%s", Callback = function(int)
+			kill_sound_volume = int
+		end})
+		killsound_volume_slider.State(false)
+		killsound_speed_slider = effsec:Slider({Name = "Kill sound speed", Min = 0.1, Max = 3, Float = 0.1, Value = 1, Flag = "kill_sound_speed", Suffix = "%s", Callback = function(int)
+			kill_sound_speed = int
+		end})
+		killsound_speed_slider.State(false)
+
+		local hitlogs_duration_slider = nil
+		local hitlogs_toggle = effsec:Toggle({Name = "Hit logs", Value = false, Flag = "hit_logs", Callback = function(bool)
+			hit_logs = bool
+			if hitlogs_duration_slider then hitlogs_duration_slider.State(bool) end
+		end})
+		hitlogs_duration_slider = effsec:Slider({Name = "Log duration", Min = 0, Max = 10, Float = 0.1, Value = 5, Flag = "hit_logs_duration", Suffix = "%ss", Callback = function(int)
 			hit_logs_duration = int
 		end})
+		hitlogs_duration_slider.State(false)
 
 		do
 			local picture_on_kill, picture_on_kill_no_background, picture_duration, fade_duration = false, false, 0.05, 0.5
+			local pok_nobg_toggle, pok_duration_slider, pok_fade_slider = nil, nil, nil
 
-			effsec:Toggle({Name = "Picture on kill", Value = false, Flag = "picture_on_kill", Callback = function(bool)
+			local pok_toggle = effsec:Toggle({Name = "Picture on kill", Value = false, Flag = "picture_on_kill", Callback = function(bool)
 				picture_on_kill = bool
+				local vis = bool and true or false
+				if pok_nobg_toggle then pok_nobg_toggle.State(vis) end
+				if pok_duration_slider then pok_duration_slider.State(vis) end
+				if pok_fade_slider then pok_fade_slider.State(vis) end
 			end})
-			effsec:Toggle({Name = "No picture background", Value = false, Flag = "picture_on_kill_no_background", Callback = function(bool)
+			pok_nobg_toggle = effsec:Toggle({Name = "No picture background", Value = false, Flag = "picture_on_kill_no_background", Callback = function(bool)
 				picture_on_kill_no_background = bool
 			end})
-			effsec:Slider({Name = "Picture duration", Min = 0, Max = 10, Float = 0.1, Value = 0.05, Flag = "picture_on_kill_duration", Suffix = "%ss", Callback = function(int)
+			pok_nobg_toggle.State(false)
+			pok_duration_slider = effsec:Slider({Name = "Picture duration", Min = 0, Max = 10, Float = 0.1, Value = 0.05, Flag = "picture_on_kill_duration", Suffix = "%ss", Callback = function(int)
 				picture_duration = int
 			end})
-			effsec:Slider({Name = "Picture fade duration", Min = 0, Max = 10, Float = 0.1, Value = 5, Flag = "picture_on_kill_fade_duration", Suffix = "%ss", Callback = function(int)
+			pok_duration_slider.State(false)
+			pok_fade_slider = effsec:Slider({Name = "Picture fade duration", Min = 0, Max = 10, Float = 0.1, Value = 5, Flag = "picture_on_kill_fade_duration", Suffix = "%ss", Callback = function(int)
 				fade_duration = int
 			end})
+			pok_fade_slider.State(false)
 			effsec:Button({Name = "Reload pictures", Confirm = false, Callback = function()
 				PicturesOnKill.Reload()
 			end})
@@ -7461,10 +8276,22 @@ do
 			PictureHolder.IgnoreGuiInset = true
 
 			game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("NotificationMessage").OnClientEvent:Connect(function(text, duration, color)
+				if text:find("Killed") or text:find("Incapacitated") then
+					if kill_sound then
+						task.defer(function()
+							local sound = kill_sound_instance:Clone()
+							sound.Volume = kill_sound_volume
+							sound.PlaybackSpeed = kill_sound_speed
+							sound.Parent = SoundService
+							sound.PlayOnRemove = true
+							sound:Destroy()
+						end)
+					end
+				end
 				if picture_on_kill and (text:find("Killed") or text:find("Incapacitated")) then
-					task.spawn(function()
-						local imagelabel = Instance.new("ImageLabel")
-						imagelabel.Image = PicturesOnKill.GetNextPicture()
+				task.spawn(function()
+					local imagelabel = Instance.new("ImageLabel")
+					imagelabel.Image = PicturesOnKill.GetNextPicture()
 						imagelabel.Size = UDim2.new(1, 0, 1, 0)
 						imagelabel.Position = UDim2.new(0, 0, 0, 0)
 						imagelabel.BackgroundTransparency = picture_on_kill_no_background and 1 or 0
@@ -7492,12 +8319,45 @@ do
 		local make_beam = cheat.make_beam
 		local bullet_module = require(game:GetService("ReplicatedStorage"):WaitForChild("Modules"):WaitForChild("FPS"):WaitForChild("Bullet"))
 		local old_createbullet = bullet_module.CreateBullet
+		local drop_proto, drop_index, drop_original, drop_applied = nil, nil, nil, false
+		local function apply_no_drop()
+			if drop_applied or not no_bullet_drop or not debug or not debug.getconstants or not debug.setconstant then return end
+			local function scan(fn, depth)
+				if drop_proto or depth > 5 or type(fn) ~= "function" then return end
+				local ok, constants = pcall(debug.getconstants, fn)
+				if ok and type(constants) == "table" then
+					for index, value in constants do
+						if value == -70 then
+							drop_proto, drop_index, drop_original = fn, index, value
+							return
+						end
+					end
+				end
+				if debug.getproto then
+					for index = 1, 8 do
+						local ok_proto, proto = pcall(debug.getproto, fn, index)
+						if not ok_proto or type(proto) ~= "function" then break end
+						scan(proto, depth + 1)
+						if drop_proto then return end
+					end
+				end
+			end
+			scan(old_createbullet, 0)
+			if drop_proto then
+				drop_applied = pcall(debug.setconstant, drop_proto, drop_index, 0)
+			end
+		end
 
 		local fake_part = Instance.new("Part")
 		fake_part.Anchored = true
 		fake_part.Parent = game:GetService("ReplicatedStorage")
 
 		bullet_module.CreateBullet = LPH_NO_VIRTUALIZE(function(...)
+			apply_no_drop()
+			if not no_bullet_drop and drop_applied and drop_proto then
+				pcall(debug.setconstant, drop_proto, drop_index, drop_original)
+				drop_applied = false
+			end
 			local args = {...}
 			fake_part.CFrame = args[5].CFrame
 			args[5] = fake_part
@@ -7557,6 +8417,21 @@ do
 				end
 			end
 		end})
+		gunsec:Toggle({Name = "No spread", Value = false, Flag = "spread_enabled", Callback = function(bool)
+			no_spread = bool
+		end})
+		gunsec:Toggle({Name = "No bullet Drop", Value = false, Flag = "nodrop_enabled", Callback = function(bool)
+			no_bullet_drop = bool
+		end})
+		gunsec:Toggle({Name = "Instant lean", Value = false, Flag = "instant_lean", Callback = function(bool)
+			instant_lean = bool
+		end})
+		gunsec:Toggle({Name = "Manipulation", Value = false, Flag = "manipulation", Callback = function(bool)
+			cheat.feat.manipulation = bool
+		end})
+		gunsec:Toggle({Name = "Insta nade Throw", Value = false, Flag = "instant_nade", Callback = function(bool)
+			cheat.feat.instant_nade = bool
+		end})
 		gunsec:Toggle({Name = "Instant reload", Value = false, Flag = "gunmods_instant_reload", Callback = function(bool)
 			instant_reload = bool
 		end})
@@ -7576,12 +8451,15 @@ do
 		gunsec:Toggle({Name = "Force auto", Value = false, Flag = "gunmods_force_auto", Callback = function(bool)
 			force_auto = bool
 		end})
-		gunsec:Toggle({Name = "Rapid fire", Value = false, Flag = "gunmods_rapid_fire", Callback = function(bool)
+		local rapid_speed_slider = nil
+		local rapid_toggle = gunsec:Toggle({Name = "Rapid fire", Value = false, Flag = "gunmods_rapid_fire", Callback = function(bool)
 			rapid_fire = bool
+			if rapid_speed_slider then rapid_speed_slider.State(bool) end
 		end})
-		gunsec:Slider({Name = "Rounds per second", Min = 10, Max = 100, Float = 1, Value = 60, Flag = "gunmods_rapid_fire_speed", Suffix = "1s/%s", Callback = function(int)
+		rapid_speed_slider = gunsec:Slider({Name = "Rounds per second", Min = 10, Max = 100, Float = 1, Value = 60, Flag = "gunmods_rapid_fire_speed", Suffix = "1s/%s", Callback = function(int)
 			rapid_fire_speed = 1/int
 		end})
+		rapid_speed_slider.State(false)
 
 		do
 			local auto_reload, auto_refill = false
@@ -7626,6 +8504,477 @@ do
 		local update_fps = project_delta.update_fps
 
 		local reload_remote, inventorymove_remote, equip_remote = project_delta.reload_remote, project_delta.inventorymove_remote, project_delta.equip_remote
+
+		cheat.auto_refill_mag = false
+		cheat.grenade_predict = false
+		cheat.grenade_predict_color = Color3.fromRGB(255, 80, 80)
+		cheat.grenade_impact_color = Color3.fromRGB(255, 200, 50)
+		cheat.grenade_bounces = 3
+		cheat.grenade_lineup = false
+		cheat.grenade_lineup_color = Color3.fromRGB(80, 220, 255)
+		cheat.grenade_arc = 1
+		local traj_bounces_slider, traj_lineup_toggle, traj_arc_dropdown = nil, nil, nil
+		local traj_toggle = gunsec:Toggle({Name = "Predict trajectory", Value = false, Flag = "gunmods_grenade_predict", Callback = function(bool)
+			cheat.grenade_predict = bool
+			local vis = bool and true or false
+			if traj_bounces_slider then traj_bounces_slider.State(vis) end
+			if traj_lineup_toggle then traj_lineup_toggle.State(vis) end
+			if traj_arc_dropdown then traj_arc_dropdown.State(vis) end
+		end})
+		traj_toggle:Colorpicker({Name = "Trajectory color", Value = Color3.fromRGB(255, 80, 80), Usealpha = false, Flag = "gunmods_grenade_predict_color", Callback = function(color)
+			cheat.grenade_predict_color = color.c
+		end})
+		traj_toggle:Colorpicker({Name = "Impact color", Value = Color3.fromRGB(255, 200, 50), Usealpha = false, Flag = "gunmods_grenade_impact_color", Callback = function(color)
+			cheat.grenade_impact_color = color.c
+		end})
+		traj_bounces_slider = gunsec:Slider({Name = "Grenade bounces", Min = 1, Max = 10, Float = 1, Value = 3, Flag = "gunmods_grenade_bounces", Callback = function(int)
+			cheat.grenade_bounces = int
+		end})
+		traj_bounces_slider.State(false)
+		traj_lineup_toggle = gunsec:Toggle({Name = "Target lineup", Value = false, Flag = "gunmods_grenade_lineup", Callback = function(bool)
+			cheat.grenade_lineup = bool
+		end})
+		traj_lineup_toggle:Colorpicker({Name = "Lineup color", Value = Color3.fromRGB(80, 220, 255), Usealpha = false, Flag = "gunmods_grenade_lineup_color", Callback = function(color)
+			cheat.grenade_lineup_color = color.c
+		end})
+		traj_lineup_toggle.State(false)
+		traj_arc_dropdown = gunsec:Dropdown({Name = "Lineup arc", Values = {"Auto (Best Lineup)", "Low Arc (Direct)", "High Arc (Mortar Lob)", "Airburst (Fuse Timed)"}, Value = "Auto (Best Lineup)", Flag = "gunmods_grenade_arc", Multi = false, Callback = function(str)
+			if str == "Low Arc (Direct)" then
+				cheat.grenade_arc = 2
+			elseif str == "High Arc (Mortar Lob)" then
+				cheat.grenade_arc = 3
+			elseif str == "Airburst (Fuse Timed)" then
+				cheat.grenade_arc = 4
+			else
+				cheat.grenade_arc = 1
+			end
+		end})
+		traj_arc_dropdown.State(false)
+		do
+			local grenade_data = {
+				F1 = {name = "F1", overhand_speed = 92, underhand_speed = 40, fuse_time = 3, is_impact = false, radius = 8.5, bounciness = 0.3},
+				RGD5 = {name = "RGD-5", overhand_speed = 108, underhand_speed = 46, fuse_time = 3, is_impact = false, radius = 8.5, bounciness = 0.38},
+				RGO = {name = "RGO", overhand_speed = 98, underhand_speed = 42, fuse_time = 3.2, is_impact = true, radius = 17, bounciness = 0.25},
+				M84 = {name = "M84 Flashbang", overhand_speed = 116, underhand_speed = 50, fuse_time = 1.2, is_impact = false, radius = 4.5, bounciness = 0.45},
+				Snowball = {name = "Snowball", overhand_speed = 122, underhand_speed = 54, fuse_time = 2.5, is_impact = true, radius = 3, bounciness = 0.05}
+			}
+			local traj_params = RaycastParams.new()
+			traj_params.FilterType = Enum.RaycastFilterType.Exclude
+			traj_params.IgnoreWater = false
+			traj_params.CollisionGroup = "WeaponRay"
+			local function traj_ignore()
+				local list = {LocalPlayer.Character, Camera, workspace.NoCollision, traj_folder}
+				pcall(function()
+					for _, v in require(game:GetService("ReplicatedStorage").Modules.UniversalTables).ReturnTable("GlobalIgnoreListProjectile") do
+						table.insert(list, v)
+					end
+				end)
+				return list
+			end
+			local function grenade_info()
+				local folder = game:GetService("ReplicatedStorage"):FindFirstChild("Players")
+				local data = folder and folder:FindFirstChild(LocalPlayer.Name)
+				local status = data and data:FindFirstChild("Status")
+				local vars = status and status:FindFirstChild("GameplayVariables")
+				local tool = vars and vars:FindFirstChild("EquippedTool")
+				local equipped = tool and tool.Value
+				if not equipped then return nil end
+				if grenade_data[equipped.Name] then
+					local g = grenade_data[equipped.Name]
+					return {name = g.name, fuse = g.fuse_time, is_rgo = g.is_impact, radius = g.radius, overhand_speed = g.overhand_speed, underhand_speed = g.underhand_speed, bounciness = g.bounciness}
+				end
+				local props = equipped:FindFirstChild("ItemProperties") or equipped
+				local itype = props and (props:GetAttribute("ItemType") or props:GetAttribute("SlotType"))
+				local nm = string.lower(equipped.Name)
+				if itype ~= "Grenade" and not string.find(nm, "grenade") and not string.find(nm, "f1") and not string.find(nm, "rgd") and not string.find(nm, "rgo") and not string.find(nm, "m84") then
+					return nil
+				end
+				local desc = props and props:GetAttribute("Description") or ""
+				local fuse = tonumber(string.match(desc, "Fuze length is set to%s*(%d+%.?%d*)%s*sec")) or 3
+				local impact = string.find(string.lower(desc), "impact") ~= nil
+				local radius = 8.5
+				local rm = string.match(desc, "fatality radius of around%s*(%d+%.?%d*)%s*metre")
+				if rm then radius = (tonumber(rm) or 3) * 2.83 end
+				return {name = props and props:GetAttribute("ItemName") or equipped.Name, fuse = fuse, is_rgo = impact, radius = radius, overhand_speed = 100, underhand_speed = 44, bounciness = 0.35}
+			end
+			local function grenade_sim(origin, vel, fuse, bounces, bounciness, is_impact)
+				local t, pos, v = 0, origin, vel
+				local normal = Vector3.new(0, 1, 0)
+				local points = {pos}
+				local grav = Vector3.new(0, -(workspace.Gravity or 80), 0)
+				local n = 0
+				while t < fuse and n <= bounces and #points < 120 do
+					local next_pos = pos + v * 0.035 + 0.5 * grav * 0.035 * 0.035
+					local next_v = (v + grav * 0.035) * 0.995
+					local delta = next_pos - pos
+					if delta.Magnitude < 0.01 then break end
+					traj_params.FilterDescendantsInstances = traj_ignore()
+					local hit = workspace:Raycast(pos, delta, traj_params)
+					if not hit then
+						pos, v = next_pos, next_v
+						table.insert(points, pos)
+					else
+						normal = hit.Normal
+						table.insert(points, hit.Position)
+						if is_impact then break end
+						local mat = hit.Instance.Material and hit.Instance.Material.Name or "Default"
+						local keep, damp = 1, 0.75
+						if mat == "Grass" or mat == "Ground" or mat == "Mud" or mat == "Sand" or mat == "Terrain" then
+							keep, damp = 0.7, 0.5
+						elseif mat == "Metal" or mat == "DiamondPlate" or mat == "CorrodedMetal" then
+							keep, damp = 1.15, 0.85
+						elseif mat == "Wood" or mat == "WoodPlanks" then
+							keep, damp = 0.9, 0.65
+						end
+						local d = v:Dot(normal)
+						if d < 0 then
+							local ncomp = normal * d
+							v = (v - ncomp) * damp - ncomp * (bounciness * keep)
+						end
+						n += 1
+						if v.Magnitude < 6 or (normal.Y > 0.5 and math.abs(d) < 4 and v.Magnitude < 10) then break end
+						pos = hit.Position + normal * 0.08
+					end
+					t += 0.035
+				end
+				return points, normal, t
+			end
+			local function lineup_target()
+				local campos = Camera.CFrame.Position
+				local mouse = UserInputService:GetMouseLocation()
+				local inset = game:GetService("GuiService"):GetGuiInset()
+				local best, best_name, best_score = nil, "Target", math.huge
+				for _, player in Players:GetPlayers() do
+					if player ~= LocalPlayer and player.Character then
+						local hum = _FindFirstChildOfClass(player.Character, "Humanoid")
+						local part = _FindFirstChild(player.Character, "HumanoidRootPart") or _FindFirstChild(player.Character, "UpperTorso") or _FindFirstChild(player.Character, "Head")
+						if hum and hum.Health > 0 and part then
+							local sp, on = _WorldToViewportPoint(Camera, part.Position)
+							local d = math.sqrt((sp.X - mouse.X) ^ 2 + (sp.Y - inset.Y - mouse.Y) ^ 2)
+							local mdist = (campos - part.Position).Magnitude
+							if mdist < 600 then
+								local score = d + mdist * 0.4
+								if score < best_score then
+									best_score = score
+									best = part
+									best_name = player.Name
+								end
+							end
+						end
+					end
+				end
+				return best, best_name
+			end
+			local function solve_arc(origin, target, speed, move_vel, fuse, bounciness, is_impact, mode)
+				local flat = target - origin
+				flat = Vector3.new(flat.X, 0, flat.Z)
+				local dist = flat.Magnitude
+				if dist <= 0.5 then return nil, 0 end
+				local dir = flat / dist
+				local g = workspace.Gravity or 80
+				local v2 = speed * speed
+				local dy = (target - origin).Y
+				local cands = {}
+				local disc = v2 * v2 - g * (g * dist * dist + 2 * dy * v2)
+				if disc >= 0 then
+					local sq = math.sqrt(disc)
+					table.insert(cands, math.deg(math.atan((v2 - sq) / (g * dist))))
+					table.insert(cands, math.deg(math.atan((v2 + sq) / (g * dist))))
+				end
+				local lo, hi, step = -10, 75, 2.5
+				if mode == 2 then
+					lo, hi, step = -10, 38, 2
+				elseif mode == 3 then
+					lo, hi, step = 38, 75, 2
+				elseif mode == 4 then
+					lo, hi, step = 5, 75, 3
+				end
+				for a = lo, hi, step do
+					table.insert(cands, a)
+				end
+				local best_dir, best_err = nil, math.huge
+				for _, deg in cands do
+					local rad = math.rad(deg)
+					local look = dir * math.cos(rad) + Vector3.new(0, 1, 0) * math.sin(rad)
+					local pts = grenade_sim(origin, look * speed + move_vel * 0.45, fuse, 3, bounciness, is_impact)
+					local final = pts[#pts]
+					if final then
+						local err = (final - target).Magnitude
+						if err < best_err then
+							best_err = err
+							best_dir = look
+						end
+					end
+				end
+				return best_dir, best_err
+			end
+			cheat.grenade_aim_direction = function(overhand)
+				local info = grenade_info()
+				if not info then return nil end
+				local tgt = lineup_target()
+				if not tgt then return nil end
+				local campos = Camera.CFrame.Position
+				local origin = campos + Camera.CFrame.LookVector * 1.3
+				local char = LocalPlayer.Character
+				local mvel = char and char.PrimaryPart and char.PrimaryPart.AssemblyLinearVelocity or Vector3.zero
+				local speed = overhand and (info.overhand_speed or 105) or (info.underhand_speed or 45)
+				local dir = solve_arc(origin, tgt.Position - Vector3.new(0, 1.2, 0), speed, mvel, info.fuse or 3, info.bounciness or 0.35, info.is_rgo, cheat.grenade_arc)
+				return dir
+			end
+			traj_folder = Instance.new("Model")
+			traj_folder.Name = "TrajFolder"
+			traj_folder.Parent = workspace
+			local traj_segs = {}
+			for i = 1, 120 do
+				local p = Instance.new("Part")
+				p.Name = "TrajSeg"
+				p.Anchored = true
+				p.CanCollide = false
+				p.CanTouch = false
+				p.CanQuery = false
+				p.CastShadow = false
+				p.Material = Enum.Material.Neon
+				p.Transparency = 1
+				p.Size = Vector3.new(0.12, 0.12, 1)
+				p.Parent = traj_folder
+				traj_segs[i] = p
+			end
+			local traj_ball = Instance.new("SphereHandleAdornment")
+			traj_ball.Adornee = workspace.Terrain
+			traj_ball.AlwaysOnTop = true
+			traj_ball.ZIndex = 6
+			traj_ball.Radius = 0.55
+			traj_ball.Transparency = 0.05
+			traj_ball.Visible = false
+			traj_ball.Parent = traj_folder
+			local traj_ring = Instance.new("CylinderHandleAdornment")
+			traj_ring.Adornee = workspace.Terrain
+			traj_ring.AlwaysOnTop = true
+			traj_ring.ZIndex = 5
+			traj_ring.Height = 0.08
+			traj_ring.Transparency = 0.05
+			traj_ring.Visible = false
+			traj_ring.Parent = traj_folder
+			local traj_fill = Instance.new("CylinderHandleAdornment")
+			traj_fill.Adornee = workspace.Terrain
+			traj_fill.AlwaysOnTop = true
+			traj_fill.ZIndex = 4
+			traj_fill.Height = 0.04
+			traj_fill.Transparency = 0.78
+			traj_fill.Visible = false
+			traj_fill.Parent = traj_folder
+			local traj_pillar = Instance.new("Part")
+			traj_pillar.Name = "ImpactPillar"
+			traj_pillar.Anchored = true
+			traj_pillar.CanCollide = false
+			traj_pillar.CanTouch = false
+			traj_pillar.CanQuery = false
+			traj_pillar.CastShadow = false
+			traj_pillar.Material = Enum.Material.Neon
+			traj_pillar.Transparency = 1
+			traj_pillar.Size = Vector3.new(0.3, 40, 0.3)
+			traj_pillar.Parent = traj_folder
+			local traj_hl = Instance.new("Highlight")
+			traj_hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+			traj_hl.FillTransparency = 0.1
+			traj_hl.OutlineTransparency = 1
+			traj_hl.Adornee = traj_folder
+			traj_hl.Parent = traj_folder
+			local traj_txt = cheat.utility.new_drawing("Text", {Visible = false, Size = 13, Center = true, Outline = true})
+			local line_segs = {}
+			for i = 1, 80 do
+				local p = Instance.new("Part")
+				p.Name = "LineupSeg"
+				p.Anchored = true
+				p.CanCollide = false
+				p.CanTouch = false
+				p.CanQuery = false
+				p.CastShadow = false
+				p.Material = Enum.Material.Neon
+				p.Transparency = 1
+				p.Size = Vector3.new(0.09, 0.09, 1)
+				p.Parent = traj_folder
+				line_segs[i] = p
+			end
+			local line_dot = cheat.utility.new_drawing("Circle", {Visible = false, Radius = 7, Thickness = 1.5})
+			local line_cdot = cheat.utility.new_drawing("Circle", {Visible = false, Radius = 2, Thickness = 1})
+			local line_txt = cheat.utility.new_drawing("Text", {Visible = false, Size = 13, Center = true, Outline = true})
+			local function traj_hide()
+				for i = 1, 120 do traj_segs[i].Transparency = 1 end
+				for i = 1, 80 do line_segs[i].Transparency = 1 end
+				traj_ball.Visible = false
+				traj_ring.Visible = false
+				traj_fill.Visible = false
+				traj_pillar.Transparency = 1
+				traj_hl.Enabled = false
+				traj_txt.Visible = false
+				line_dot.Visible = false
+				line_cdot.Visible = false
+				line_txt.Visible = false
+			end
+			local function traj_hide_line()
+				for i = 1, 80 do line_segs[i].Transparency = 1 end
+				line_dot.Visible = false
+				line_cdot.Visible = false
+				line_txt.Visible = false
+			end
+			cheat.utility.new_renderstepped(function()
+				if not cheat.grenade_predict and not cheat.grenade_lineup then
+					traj_hide()
+					return
+				end
+				local info = grenade_info()
+				if not info then
+					traj_hide()
+					return
+				end
+				local char = LocalPlayer.Character
+				if not char or not Camera then
+					traj_hide()
+					return
+				end
+				local rmb = UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton2)
+				local speed = rmb and (info.underhand_speed or 45) or (info.overhand_speed or 105)
+				local origin = Camera.CFrame.Position + Camera.CFrame.LookVector * 1.3
+				local mvel = char.PrimaryPart and char.PrimaryPart.AssemblyLinearVelocity or Vector3.zero
+				if cheat.grenade_predict then
+					local pts, _, impact_t = grenade_sim(origin, Camera.CFrame.LookVector * speed + mvel * 0.45, info.fuse or 3, cheat.grenade_bounces, info.bounciness or 0.35, info.is_rgo)
+					local n = 1
+					local total = #pts - 1
+					for i = 1, total do
+						if n > 120 then break end
+						local a, b2 = pts[i], pts[i + 1]
+						if (b2 - a).Magnitude > 0.001 then
+							local s = traj_segs[n]
+							local k = i / math.max(total, 1)
+							s.Size = Vector3.new(0.12, 0.12, (b2 - a).Magnitude)
+							s.CFrame = CFrame.lookAt((a + b2) * 0.5, b2)
+							s.Color = cheat.grenade_predict_color:Lerp(cheat.grenade_impact_color, k)
+							s.Transparency = 0.05 + k * 0.35
+							n += 1
+						end
+					end
+					for i = n, 120 do traj_segs[i].Transparency = 1 end
+					local final = pts[#pts]
+					if final then
+						local radius = info.radius or 8.5
+						local pulse = 1 + 0.06 * math.sin(tick() * 6)
+						traj_ball.CFrame = CFrame.new(final)
+						traj_ball.Color3 = cheat.grenade_impact_color
+						traj_ball.Visible = true
+						traj_ring.Radius = radius * pulse
+						traj_ring.InnerRadius = math.max(0, radius * pulse - 0.45)
+						traj_ring.Color3 = cheat.grenade_impact_color
+						traj_ring.Transparency = 0.05 + 0.15 * math.abs(math.sin(tick() * 6))
+						traj_ring.CFrame = CFrame.new(final)
+						traj_ring.Visible = true
+						traj_fill.Radius = radius
+						traj_fill.InnerRadius = 0
+						traj_fill.Color3 = cheat.grenade_impact_color
+						traj_fill.CFrame = CFrame.new(final)
+						traj_fill.Visible = true
+						traj_pillar.CFrame = CFrame.new(final + _Vector3new(0, 20, 0))
+						traj_pillar.Color = cheat.grenade_impact_color
+						traj_pillar.Transparency = 0.25
+						traj_hl.FillColor = cheat.grenade_predict_color
+						traj_hl.OutlineColor = cheat.grenade_predict_color
+						traj_hl.Enabled = true
+						local sp, on = _WorldToViewportPoint(Camera, final)
+						if on and sp.Z > 0 then
+							traj_txt.Position = _Vector2new(sp.X, sp.Y - 20)
+							traj_txt.Text = info.name .. " [T-" .. ("%.1fs"):format(math.max((info.fuse or 3) - impact_t, 0)) .. " | Lethal: " .. ("%.1f"):format(radius / 2.8) .. "m | " .. math.floor((final - Camera.CFrame.Position).Magnitude / 2.8) .. "m]"
+							traj_txt.Color = cheat.grenade_impact_color
+							traj_txt.Visible = true
+						else
+							traj_txt.Visible = false
+						end
+					else
+						traj_ball.Visible = false
+						traj_ring.Visible = false
+						traj_fill.Visible = false
+						traj_pillar.Transparency = 1
+						traj_txt.Visible = false
+					end
+				else
+					for i = 1, 120 do traj_segs[i].Transparency = 1 end
+					traj_ball.Visible = false
+					traj_ring.Visible = false
+					traj_fill.Visible = false
+					traj_pillar.Transparency = 1
+					traj_hl.Enabled = false
+					traj_txt.Visible = false
+				end
+				if cheat.grenade_lineup then
+					local tgt, tname = lineup_target()
+					if tgt then
+						local dir, err = solve_arc(origin, tgt.Position - Vector3.new(0, 1.2, 0), speed, mvel, info.fuse or 3, info.bounciness or 0.35, info.is_rgo, cheat.grenade_arc)
+						if dir then
+							local pts = grenade_sim(origin, dir * speed + mvel * 0.45, info.fuse or 3, cheat.grenade_bounces, info.bounciness or 0.35, info.is_rgo)
+							local n = 1
+							local total = #pts - 1
+							for i = 1, total do
+								if n > 80 then break end
+								local a, b2 = pts[i], pts[i + 1]
+								if (b2 - a).Magnitude > 0.001 then
+									local s = line_segs[n]
+									local k = i / math.max(total, 1)
+									s.Size = Vector3.new(0.09, 0.09, (b2 - a).Magnitude)
+									s.CFrame = CFrame.lookAt((a + b2) * 0.5, b2)
+									s.Color = cheat.grenade_lineup_color:Lerp(Color3.new(1, 1, 1), k * 0.7)
+									s.Transparency = 0.1 + k * 0.3
+									n += 1
+								end
+							end
+							for i = n, 80 do line_segs[i].Transparency = 1 end
+							local sp, on = _WorldToViewportPoint(Camera, Camera.CFrame.Position + dir * 100)
+							if on and sp.Z > 0 then
+								local pulse = 1 + 0.15 * math.sin(tick() * 8)
+								line_dot.Position = _Vector2new(sp.X, sp.Y)
+								line_dot.Color = cheat.grenade_lineup_color
+								line_dot.Radius = 7 * pulse
+								line_dot.Visible = true
+								line_cdot.Position = _Vector2new(sp.X, sp.Y)
+								line_cdot.Color = cheat.grenade_lineup_color
+								line_cdot.Visible = true
+								local flat = (tgt.Position - Vector3.new(0, 1.2, 0)) - origin
+								local mdist = math.floor(Vector3.new(flat.X, 0, flat.Z).Magnitude / 2.8)
+								line_txt.Position = _Vector2new(sp.X, sp.Y - 18)
+								line_txt.Text = "[AIM HERE] " .. tname .. " (" .. mdist .. "m | Err: " .. ("%.1f"):format(err / 2.8) .. "m)"
+								line_txt.Color = cheat.grenade_lineup_color
+								line_txt.Visible = true
+							else
+								line_dot.Visible = false
+								line_cdot.Visible = false
+								line_txt.Visible = false
+							end
+						else
+							traj_hide_line()
+						end
+					else
+						traj_hide_line()
+					end
+				else
+					traj_hide_line()
+				end
+			end)
+		end
+		task.spawn(function()
+			while task.wait(0.5) do
+				if cheat.auto_refill_mag and project_delta.fps_object then
+					pcall(function()
+						local fps_object = project_delta.fps_object
+						local mag = get_compatible_mag(fps_object)
+						if not mag then return end
+						local loaded = mag:GetAttribute("LoadedAmmo") or 0
+						local maxloaded = mag:GetAttribute("MaxLoadedAmmo") or 30
+						if loaded >= maxloaded then return end
+						local ammo = get_compatible_ammo(fps_object, nil)
+						if not ammo then return end
+						inventorymove_remote:FireServer(ammo:GetAttribute("Slot"), mag:GetAttribute("Slot"), ammo.Parent, mag.Parent, nil)
+					end)
+				end
+			end
+		end)
 
 		local local_gameplayvars, lpo = project_delta.local_game_data.Status.GameplayVariables, cheat.player_list[LocalPlayer]
 
@@ -7713,6 +9062,18 @@ do
 				fps_object.AimInSpeed = 0
 				fps_object.AimOutSpeed = 0
 			end
+			local lean_spring = fps_object.springs and fps_object.springs.leanAlpha
+			if lean_spring and type(lean_spring) == "table" then
+				if instant_lean then
+					if cheat.lean_base == nil then
+						cheat.lean_base = lean_spring.Speed
+					end
+					lean_spring.Speed = 50
+				elseif cheat.lean_base ~= nil then
+					lean_spring.Speed = cheat.lean_base
+					cheat.lean_base = nil
+				end
+			end
 			if force_auto or rapid_fire then
 				if rapid_fire then fps_object.FireRate = rapid_fire_speed end
 				local firemodes = fps_object.FireModes or {"Auto"}
@@ -7768,6 +9129,7 @@ do
 
 			local viewport_size, field_of_view = Camera.ViewportSize, Camera.FieldOfView
 			local new_fov_size = (viewport_size.X * (fov_size / field_of_view)) / 2
+			cheat.aim_fov = new_fov_size
 
 			local maximum_distance = math.huge
 			local target_list = get_targets_in_fov(new_fov_size, aimbot_part, aimbot_team_check, aimbot_dead_check, aimbot_dist_check, aimbot_max_distance, aimbot_npc_check, aimbot_screen_check)
@@ -7791,12 +9153,16 @@ do
 			local bullet_type, penetration_power
 			if autowall then
 				local bullets_list = fps_object.BulletsList
-				if fps_object.Bullets > 0 then
+				if (fps_object.Bullets or 0) > 0 and bullets_list then
 					local last = #bullets_list
-					if bullets_list[last].Amount > 0 then
-						bullet_type = bullets_list[last].AmmoType
+					local entry = bullets_list[last]
+					if entry and (entry.Amount or 0) > 0 then
+						bullet_type = entry.AmmoType
 					else
-						bullet_type = bullets_list[last - 1].AmmoType
+						local prev = bullets_list[last - 1]
+						if prev then
+							bullet_type = prev.AmmoType
+						end
 					end
 				end
 				if bullet_type then
@@ -7806,7 +9172,6 @@ do
 
 			for _, target in target_list do
 				local aimpart, player, character, distance = unpack(target)
-
 
 				local scan = hitscan_hitboxes
 				local aname = aimpart.Name
@@ -7854,8 +9219,8 @@ do
 			end
 		end
 	end))
-	cheat.utility.new_renderstepped(LPH_NO_VIRTUALIZE(function()
-		local mpos = UserInputService:GetMouseLocation()
+		cheat.utility.new_renderstepped(LPH_NO_VIRTUALIZE(function()
+			local mpos = UserInputService:GetMouseLocation()
 		if fov_show then
 			local viewportsize = Camera.ViewportSize
 			local new_fov_size = (viewportsize.X * (fov_size / Camera.FieldOfView)) / 2
@@ -7891,6 +9256,175 @@ do
 			end
 		else
 			SnapLine.Visible = false
+		end
+		local hud_on = cheat.hud.enabled and aimbot_enabled and (aimbot_mode == "Silent" or aimbot_enabled_key) and target_part and target_character and target_player
+		cheat.hud.gui.Enabled = hud_on and true or false
+		if hud_on then
+			local now = os.clock()
+			if now - cheat.hud.tick < 0.1 then return end
+			cheat.hud.tick = now
+			local ch, pl = target_character, target_player
+			local hrp = ch and _FindFirstChild(ch, "HumanoidRootPart")
+			local hum = ch and _FindFirstChildOfClass(ch, "Humanoid")
+			if cheat.hud.target ~= ch then
+				cheat.hud.target = ch
+			end
+			if typeof(pl) == "Instance" and pl:IsA("Player") and cheat.hud.seen[pl] == nil then
+				cheat.hud.seen[pl] = os.clock()
+			end
+			local tp = (typeof(pl) == "Instance" and pl:IsA("Player")) and cheat.player_list[pl] or nil
+			local is_player = tp ~= nil
+			local vis = false
+			if tp and tp.visible ~= nil then
+				vis = tp.visible
+			elseif hrp then
+				vis = cheat.is_visible(Camera.CFrame.Position, ch, hrp) and true or false
+			end
+			local white = Color3.fromRGB(230, 230, 230)
+			local gray = Color3.fromRGB(150, 150, 150)
+			local green = Color3.fromRGB(110, 220, 110)
+			local red = Color3.fromRGB(220, 90, 90)
+			local orange = Color3.fromRGB(255, 170, 60)
+			local fields = {}
+			if is_player then
+				local sc = cheat.hud.stat_cache
+				if sc.name ~= pl.Name or now - sc.t > 0.5 then
+					sc.name = pl.Name
+					sc.t = now
+					sc.kd, sc.kstr, sc.hours, sc.reports, sc.visor = "?", "", 0, 0, nil
+					pcall(function()
+						local folder = game:GetService("ReplicatedStorage"):FindFirstChild("Players")
+						local data = folder and folder:FindFirstChild(pl.Name)
+						local stats = data and data.Status.Journey.Statistics
+						if stats then
+							local k = stats:GetAttribute("K_PVP") or stats:GetAttribute("Kills") or 0
+							local d = stats:GetAttribute("D_PVP") or stats:GetAttribute("Deaths") or 0
+							sc.kd = d == 0 and string.format("%.2f", k) or string.format("%.2f", k / d)
+							sc.kstr = string.format("(%d / %d)", k, d)
+							sc.hours = (stats:GetAttribute("TimePlayed") or 0) / 3600
+							local uac = data.Status:FindFirstChild("UAC")
+							local repf = uac and uac:FindFirstChild("Reports")
+							if repf then
+								sc.reports = repf:GetAttribute("1") or 0
+							end
+						end
+						local inv = data and data:FindFirstChild("Inventory")
+						if inv then
+							for _, obj in inv:GetDescendants() do
+								if obj.Name:lower():find("visor", 1, true) then
+									local tog = obj:GetAttribute("Toggle")
+									if type(tog) == "boolean" then
+										sc.visor = tog
+										break
+									end
+								end
+							end
+						end
+					end)
+				end
+				if cheat.hud.show.name then
+					table.insert(fields, {"user", pl.Name, white})
+				end
+				if cheat.hud.show.kdr or cheat.hud.show.kd then
+					table.insert(fields, {"kd", sc.kd .. " " .. sc.kstr, white})
+				end
+				if cheat.hud.show.time then
+					table.insert(fields, {"play time", string.format("%.0fh", sc.hours), white})
+				end
+				if cheat.hud.show.guns then
+					local tool = "NONE"
+					pcall(function()
+						local folder = game:GetService("ReplicatedStorage"):FindFirstChild("Players")
+						local data = folder and folder:FindFirstChild(pl.Name)
+						local eq = data and data.Status.GameplayVariables:FindFirstChild("EquippedTool")
+						if eq and eq.Value then tool = eq.Value.Name end
+					end)
+					if tool == "NONE" and tp and tp.current_weapon then
+						tool = tp.current_weapon.Name or "NONE"
+					end
+					table.insert(fields, {"tool", string.lower(tool), white})
+				end
+				if cheat.hud.show.dist and hrp then
+					table.insert(fields, {"dist", math.floor((Camera.CFrame.Position - hrp.Position).Magnitude / 3) .. "m", white})
+				end
+				if cheat.hud.show.vis then
+					table.insert(fields, {"status", vis and "visible" or "hidden", vis and green or red})
+				end
+				if cheat.hud.show.reps then
+					table.insert(fields, {"reports", tostring(sc.reports), white})
+				end
+				if cheat.hud.show.visor then
+					if sc.visor == nil then
+						table.insert(fields, {"visor", "n/a", gray})
+					else
+						table.insert(fields, {"visor", sc.visor and "on" or "off", sc.visor and green or orange})
+					end
+				end
+			else
+				table.insert(fields, {"user", ch and ch.Name or "?", white})
+				if cheat.hud.show.dist and hrp then
+					table.insert(fields, {"dist", math.floor((Camera.CFrame.Position - hrp.Position).Magnitude / 3) .. "m", white})
+				end
+				if cheat.hud.show.vis then
+					table.insert(fields, {"status", vis and "visible" or "hidden", vis and green or red})
+				end
+			end
+			local hp_c, hp_m = 0, 100
+			if hum then
+				hp_c = math.floor(hum.Health)
+				hp_m = math.floor(hum.MaxHealth)
+			end
+			local show_hp = cheat.hud.show.hp
+			local show_av = cheat.hud.show.viewport and is_player
+			local n = #fields
+			local row_h, gap, pad, x0 = 13, 2, 8, 10
+			local right = cheat.hud.w - pad
+			local top = pad
+			local col_x, col_w = x0, right - x0
+			if show_av then
+				cheat.hud.avframe.Position = UDim2.fromOffset(x0, top)
+				col_x = x0 + 26 + 6
+				col_w = right - col_x
+			end
+			for i = 1, n do
+				local row = cheat.hud.rows[i]
+				local f = fields[i]
+				row.bg.Visible = f ~= nil
+				row.bg.Position = UDim2.fromOffset(col_x, top + (i - 1) * (row_h + gap))
+				row.bg.Size = UDim2.fromOffset(col_w, row_h)
+				if f then
+					row.lbl.Text = f[1]
+					row.val.Text = f[2]
+					row.val.TextColor3 = f[3]
+				end
+			end
+			local body_h = math.max(show_av and 26 or 0, n > 0 and (n * row_h + (n - 1) * gap) or 0)
+			local h = top + body_h + pad
+			if show_hp then
+				local hy = top + body_h + gap + 2
+				cheat.hud.hp_bg.Visible = true
+				cheat.hud.hp_bg.Position = UDim2.fromOffset(x0, hy)
+				cheat.hud.hp_bg.Size = UDim2.fromOffset(right - x0, row_h)
+				local k = math.clamp(hp_c / math.max(hp_m, 1), 0, 1)
+				cheat.hud.hp_fill.Size = UDim2.new(k, 0, 1, 0)
+				cheat.hud.hp_fill.BackgroundColor3 = k < 0.5 and Color3.fromRGB(225, 65, 65):Lerp(Color3.fromRGB(235, 200, 70), k / 0.5) or Color3.fromRGB(235, 200, 70):Lerp(Color3.fromRGB(75, 215, 95), (k - 0.5) / 0.5)
+				cheat.hud.hp_t.Text = hp_c .. " / " .. hp_m
+				h = hy + row_h + pad
+			else
+				cheat.hud.hp_bg.Visible = false
+			end
+			cheat.hud.avframe.Visible = show_av
+			if show_av and typeof(pl) == "Instance" and pl:IsA("Player") then
+				local thumb = "rbxthumb://type=AvatarBust&id=" .. pl.UserId .. "&w=150&h=150"
+				if cheat.hud.av.Image ~= thumb then
+					cheat.hud.av.Image = thumb
+				end
+			end
+			cheat.hud.outer.Size = UDim2.fromOffset(cheat.hud.w, h)
+			cheat.hud.strip.BackgroundColor3 = Library.Theme.accent
+		else
+			cheat.hud.target = nil
+			table.clear(cheat.hud.seen)
 		end
 		if aimbot_enabled and aimbot_enabled_key and target_part and target_character then
 			local new_pos = target_part.Position
@@ -8033,7 +9567,7 @@ do
 			enemy_sets.chams_color = {color.c, color.a}
 			cheat.EspLibrary.icaca()
 		end})
-		chams_visible_toggle = espsec:Toggle({Name = "Visible Only", Value = false, Flag = "esp_chams_visible_only", Callback = function(bool)
+		chams_visible_toggle = espsec:Toggle({Name = "Visible only", Value = false, Flag = "esp_chams_visible_only", Callback = function(bool)
 			enemy_sets.chams_visible_only = bool
 			cheat.EspLibrary.icaca()
 		end})
@@ -8149,12 +9683,13 @@ do
 		end))
 	end
 	do
-		setsec:Dropdown({Name = "Checks", Values = {"Team check", "Dead check", "Distance check", "NPC check"}, Value = {}, Flag = "esp_checks", Multi = true, Callback = function(tbl)
+		setsec:Dropdown({Name = "Checks", Values = {"Team check", "Dead check", "Distance check", "NPC check", "Visible check"}, Value = {}, Flag = "esp_checks", Multi = true, Callback = function(tbl)
 			local funny = {
 				["Team check"] = "team_check",
 				["Dead check"] = "dead_check",
 				["Distance check"] = "dist_check",
-				["NPC check"] = "npc_check"
+				["NPC check"] = "npc_check",
+				["Visible check"] = "visible_check"
 			}
 			for flag_text, esp_var in funny do
 				enemy_main_sets[esp_var] = false
@@ -8192,10 +9727,13 @@ do
 		end})
 	end
 	do
-		itmsec:Toggle({Name = "Item ESP", Value = false, Flag = "esp_item", Callback = function(bool)
+		local item_maxdist_slider = nil
+		local item_toggle = itmsec:Toggle({Name = "Item esp", Value = false, Flag = "esp_item", Callback = function(bool)
 			item_sets.enabled = bool
+			if item_maxdist_slider then item_maxdist_slider.State(bool) end
 			cheat.EspLibrary.icaca()
-		end}):Colorpicker({Name = "Item Color", Value = Color3.new(1, 1, 1), Usealpha = true, Flag = "esp_item_color", Callback = function(color)
+		end})
+		item_toggle:Colorpicker({Name = "Item color", Value = Color3.new(1, 1, 1), Usealpha = true, Flag = "esp_item_color", Callback = function(color)
 			item_sets.text_color = {color.c, color.a}
 			cheat.EspLibrary.icaca()
 		end})
@@ -8215,17 +9753,21 @@ do
 			item_sets.durability_bar = bool
 			cheat.EspLibrary.icaca()
 		end})
-		itmsec:Slider({Name = "Max distance (0 = inf)", Min = 0, Max = 200, Float = 1, Value = 10, Flag = "esp_item_max_distance", Callback = function(int)
+		item_maxdist_slider = itmsec:Slider({Name = "Max distance (0 = inf)", Min = 0, Max = 200, Float = 1, Value = 10, Flag = "esp_item_max_distance", Callback = function(int)
 			item_main_sets.dist_check = int > 0
 			item_main_sets.max_distance = int * 3
 			cheat.EspLibrary.icaca()
 		end})
+		item_maxdist_slider.State(false)
 	end
 	do
-		othsec:Toggle({Name = "Corpse ESP", Value = false, Flag = "esp_corpse", Callback = function(bool)
+		local corpse_maxdist_slider = nil
+		local corpse_toggle = othsec:Toggle({Name = "Corpse esp", Value = false, Flag = "esp_corpse", Callback = function(bool)
 			corpse_sets.enabled = bool
+			if corpse_maxdist_slider then corpse_maxdist_slider.State(bool) end
 			cheat.EspLibrary.icaca()
-		end}):Colorpicker({Name = "Corpse Color", Value = Color3.new(1, 1, 1), Usealpha = true, Flag = "esp_corpse_color", Callback = function(color)
+		end})
+		corpse_toggle:Colorpicker({Name = "Corpse color", Value = Color3.new(1, 1, 1), Usealpha = true, Flag = "esp_corpse_color", Callback = function(color)
 			corpse_sets.text_color = {color.c, color.a}
 			cheat.EspLibrary.icaca()
 		end})
@@ -8233,11 +9775,135 @@ do
 			corpse_sets.distance = bool
 			cheat.EspLibrary.icaca()
 		end})
-		othsec:Slider({Name = "Max distance (0 = inf)", Min = 0, Max = 1000, Float = 10, Value = 100, Flag = "esp_corpse_max_distance", Callback = function(int)
+		corpse_maxdist_slider = othsec:Slider({Name = "Max distance (0 = inf)", Min = 0, Max = 1000, Float = 10, Value = 100, Flag = "esp_corpse_max_distance", Callback = function(int)
 			corpse_main_sets.dist_check = int > 0
 			corpse_main_sets.max_distance = int * 3
 			cheat.EspLibrary.icaca()
 		end})
+		corpse_maxdist_slider.State(false)
+	end
+	do
+		cheat.vehicle_esp = false
+		cheat.vehicle_color = Color3.fromRGB(95, 25, 21)
+		cheat.vehicle_size = 11
+		cheat.vehicle_icon = 44
+		cheat.vehicle_maxdist = 0
+		local function vehicle_anchor(obj)
+			if obj:IsA("BasePart") then
+				return obj
+			end
+			if obj:IsA("Model") then
+				local p = obj.PrimaryPart or _FindFirstChild(obj, "HumanoidRootPart") or _FindFirstChild(obj, "Head") or obj:FindFirstChildWhichIsA("BasePart", true)
+				if p then return p end
+			end
+			return obj:FindFirstChildWhichIsA("BasePart", true)
+		end
+		local function vehicle_build(vehicle)
+			local anchor = vehicle_anchor(vehicle)
+			if not anchor then return end
+			if vehicle:FindFirstChild("VehicleESP") then return end
+			local gui = Instance.new("BillboardGui")
+			gui.Name = "VehicleESP"
+			gui.Adornee = anchor
+			gui.AlwaysOnTop = true
+			gui.StudsOffset = Vector3.new(0, 2.25, 0)
+			gui.Parent = vehicle
+			local icon = Instance.new("ImageLabel")
+			icon.Name = "Icon"
+			icon.AnchorPoint = Vector2.new(0.5, 0)
+			icon.BackgroundTransparency = 1
+			icon.Image = "rbxassetid://72334306153050"
+			icon.Position = UDim2.new(0.5, 0, 0, 0)
+			icon.ScaleType = Enum.ScaleType.Fit
+			icon.Parent = gui
+			local text = Instance.new("TextLabel")
+			text.Name = "Text"
+			text.BackgroundTransparency = 1
+			text.Font = Enum.Font.SourceSansBold
+			text.Text = "0m"
+			text.TextColor3 = cheat.vehicle_color
+			text.TextStrokeTransparency = 0
+			text.TextStrokeColor3 = Color3.new(0, 0, 0)
+			text.Parent = gui
+			vehicle_size_apply(gui, text, icon)
+		end
+		function vehicle_size_apply(gui, text, icon)
+			local isize = math.clamp(cheat.vehicle_icon, 16, 120)
+			gui.Size = UDim2.new(0, math.max(96, isize + 52), 0, (isize + 2) + math.max(18, cheat.vehicle_size + 10) + 4)
+			icon.Size = UDim2.fromOffset(isize, isize)
+			text.Position = UDim2.new(0, 0, 0, isize + 2)
+			text.Size = UDim2.new(1, 0, 0, math.max(18, cheat.vehicle_size + 10))
+			text.TextSize = cheat.vehicle_size
+		end
+		local vehicle_text_slider, vehicle_icon_slider, vehicle_maxdist_slider = nil, nil, nil
+		local vehicle_toggle = othsec:Toggle({Name = "Vehicle esp", Value = false, Flag = "esp_vehicles", Callback = function(bool)
+			cheat.vehicle_esp = bool
+			local vis = bool and true or false
+			if vehicle_text_slider then vehicle_text_slider.State(vis) end
+			if vehicle_icon_slider then vehicle_icon_slider.State(vis) end
+			if vehicle_maxdist_slider then vehicle_maxdist_slider.State(vis) end
+			if not bool then
+				local folder = workspace:FindFirstChild("Vehicles")
+				if folder then
+					for _, v in folder:GetChildren() do
+						local g = v:FindFirstChild("VehicleESP")
+						if g then
+							pcall(function() g:Destroy() end)
+						end
+					end
+				end
+			end
+		end})
+		vehicle_toggle:Colorpicker({Name = "Vehicles color", Value = Color3.fromRGB(95, 25, 21), Usealpha = false, Flag = "esp_vehicles_color", Callback = function(color)
+			cheat.vehicle_color = color.c
+		end})
+		vehicle_text_slider = othsec:Slider({Name = "Vehicle text size", Min = 1, Max = 20, Float = 1, Value = 11, Flag = "esp_vehicles_size", Callback = function(int)
+			cheat.vehicle_size = int
+		end})
+		vehicle_text_slider.State(false)
+		vehicle_icon_slider = othsec:Slider({Name = "Vehicle icon size", Min = 16, Max = 120, Float = 1, Value = 44, Flag = "esp_vehicles_icon", Callback = function(int)
+			cheat.vehicle_icon = int
+		end})
+		vehicle_icon_slider.State(false)
+		vehicle_maxdist_slider = othsec:Slider({Name = "Max distance (0 = inf)", Min = 0, Max = 3000, Float = 10, Value = 0, Flag = "esp_vehicles_max_distance", Callback = function(int)
+			cheat.vehicle_maxdist = int
+		end})
+		vehicle_maxdist_slider.State(false)
+		local vehicle_tick = 0
+		cheat.utility.new_renderstepped(function()
+			if not cheat.vehicle_esp then return end
+			local now = os.clock()
+			if now - vehicle_tick < 0.25 then return end
+			vehicle_tick = now
+			local char = LocalPlayer.Character
+			local hrp = char and _FindFirstChild(char, "HumanoidRootPart")
+			if not hrp then return end
+			local folder = workspace:FindFirstChild("Vehicles")
+			if not folder then return end
+			for _, vehicle in folder:GetChildren() do
+				local gui = vehicle:FindFirstChild("VehicleESP")
+				if not gui then
+					vehicle_build(vehicle)
+					gui = vehicle:FindFirstChild("VehicleESP")
+				end
+				if gui then
+					local text = gui:FindFirstChild("Text")
+					local icon = gui:FindFirstChild("Icon")
+					local anchor = vehicle_anchor(vehicle)
+					if text and anchor then
+						local dist = math.floor((hrp.Position - anchor.Position).Magnitude / 3)
+						if cheat.vehicle_maxdist > 0 and dist > cheat.vehicle_maxdist then
+							gui.Enabled = false
+						else
+							gui.Enabled = true
+							text.Text = tostring(dist) .. "m"
+							text.TextColor3 = cheat.vehicle_color
+							vehicle_size_apply(gui, text, icon)
+						end
+					end
+				end
+			end
+		end)
 	end
 
 	local no_screen_effects, viewmodel_changer, gun_changer, arm_changer = false, false, false, false
@@ -8314,43 +9980,52 @@ do
 
 	do
 		local old_fov = Camera.FieldOfView
-		mscsec:Toggle({Name = "FOV Changer", Value = false, Flag = "view_fov_changer", Callback = function(bool)
+		mscsec:Toggle({Name = "FOV changer", Value = false, Flag = "view_fov_changer", Callback = function(bool)
 			fov_changer = bool
 			Camera.FieldOfView = (zoom and zoom_key and zoom_size) or (fov_changer and fov_changer_size) or old_fov
 		end})
-		mscsec:Slider({Name = "Desired FOV", Min = 50, Max = 120, Float = 1, Value = 100, Flag = "view_fov_changer_size", Callback = function(int)
+		mscsec:Slider({Name = "Desired fov", Min = 50, Max = 120, Float = 1, Value = 100, Flag = "view_fov_changer_size", Callback = function(int)
 			fov_changer_size = int
 			Camera.FieldOfView = (zoom and zoom_key and zoom_size) or (fov_changer and fov_changer_size) or old_fov
 		end})
-		local zoom_keybind; zoom_keybind = mscsec:Toggle({Name = "Zoom", Value = false, Flag = "view_zoom", Callback = function(bool)
+		local zoom_size_slider = nil
+		local zoom_toggle = mscsec:Toggle({Name = "Zoom", Value = false, Flag = "view_zoom", Callback = function(bool)
 			zoom = bool
+			if zoom_size_slider then zoom_size_slider.State(bool) end
 			Camera.FieldOfView = (zoom and zoom_key and zoom_size) or (fov_changer and fov_changer_size) or old_fov
-		end}):Keybind({Name = "Zoom", Mode = "Toggle", Key = Enum.KeyCode.Z, Value = false, Flag = "view_zoom_keybind", Callback = function(bool)
+		end})
+		local zoom_keybind; zoom_keybind = zoom_toggle:Keybind({Name = "Zoom", Mode = "Toggle", Key = Enum.KeyCode.Z, Value = false, Flag = "view_zoom_keybind", Link = "view_zoom", Callback = function(bool)
 			zoom_key = zoom and bool
 			zoom_keybind.Set(zoom_key, true)
 			Camera.FieldOfView = (zoom and zoom_key and zoom_size) or (fov_changer and fov_changer_size) or old_fov
 		end})
-		mscsec:Slider({Name = "Desired zoom", Min = 1, Max = 50, Float = 1, Value = 20, Flag = "view_zoom_size", Callback = function(int)
+		zoom_size_slider = mscsec:Slider({Name = "Desired zoom", Min = 1, Max = 50, Float = 1, Value = 20, Flag = "view_zoom_size", Callback = function(int)
 			zoom_size = int
 			Camera.FieldOfView = (zoom and zoom_key and zoom_size) or (fov_changer and fov_changer_size) or old_fov
 		end})
+		zoom_size_slider.State(false)
 
 		do
-			local freecam, freecam_key, freecam_speed = false, false, 750
-			local fc_keybind; fc_keybind = mscsec:Toggle({Name = "Freecam", Value = false, Flag = "view_freecam", Callback = function(bool)
+			local freecam, freecam_speed = false, 750
+			local freecam_key = false
+			local freecam_speed_slider = nil
+			local fc_toggle = mscsec:Toggle({Name = "Freecam", Value = false, Flag = "view_freecam", Callback = function(bool)
 				freecam = bool
-			end}):Keybind({Name = "Freecam", Mode = "Toggle", Key = Enum.KeyCode.L, Value = false, Flag = "view_freecam_keybind", Callback = function(bool)
+				if freecam_speed_slider then freecam_speed_slider.State(bool) end
+			end})
+			local fc_keybind; fc_keybind = fc_toggle:Keybind({Name = "Freecam", Mode = "Toggle", Key = Enum.KeyCode.L, Value = false, Flag = "view_freecam_keybind", Link = "view_freecam", Callback = function(bool)
 				freecam_key = freecam and bool
 				fc_keybind.Set(freecam_key, true)
 			end})
-			mscsec:Slider({Name = "Freecam speed", Min = 100, Max = 1000, Float = 10, Value = 750, Flag = "view_freecam_speed", Callback = function(int)
+			freecam_speed_slider = mscsec:Slider({Name = "Freecam speed", Min = 100, Max = 1000, Float = 10, Value = 750, Flag = "view_freecam_speed", Callback = function(int)
 				freecam_speed = int
 			end})
+			freecam_speed_slider.State(false)
 
 			local new_camera_pos
 
-			task.spawn(function()
-				while task.wait(1/5) do
+	task.spawn(function()
+		while task.wait(1/5) do
 					local closest, distance = nil, math.huge
 					if (freecam and freecam_key and new_camera_pos) then
 						LPH_NO_VIRTUALIZE(function()
@@ -8403,9 +10078,12 @@ do
 			end))
 		end
 
-		local tp_keybind; tp_keybind = mscsec:Toggle({Name = "Thirdperson", Value = false, Flag = "view_thirdperson", Callback = function(bool)
+		local tp_dist_slider = nil
+		local tp_toggle = mscsec:Toggle({Name = "Thirdperson", Value = false, Flag = "view_thirdperson", Callback = function(bool)
 			thirdperson = bool
-		end}):Keybind({Name = "Thirdperson", Mode = "Toggle", Key = Enum.KeyCode.N, Value = false, Flag = "view_thirdperson_keybind", Callback = function(bool)
+			if tp_dist_slider then tp_dist_slider.State(bool) end
+		end})
+		local tp_keybind; tp_keybind = tp_toggle:Keybind({Name = "Thirdperson", Mode = "Toggle", Key = Enum.KeyCode.N, Value = false, Flag = "view_thirdperson_keybind", Link = "view_thirdperson", Callback = function(bool)
 			thirdperson_key = thirdperson and bool
 			tp_keybind.Set(thirdperson_key, true)
 
@@ -8414,8 +10092,186 @@ do
 				vmpos(viewmodel)
 			end
 		end})
-		mscsec:Slider({Name = "Thirdperson distance", Min = 0, Max = 15, Float = 0.1, Value = 5, Flag = "view_thirdperson_distance", Callback = function(int)
+		tp_dist_slider = mscsec:Slider({Name = "Thirdperson distance", Min = 0, Max = 15, Float = 0.1, Value = 5, Flag = "view_thirdperson_distance", Callback = function(int)
 			thirdperson_distance = int
+		end})
+		tp_dist_slider.State(false)
+
+		cheat.custom_skybox = false
+		cheat.skybox_preset = "Purple Nebula"
+		cheat.skybox_brightness = 100
+		cheat.skybox_rotx = 0
+		cheat.skybox_rotz = 0
+		local skybox_presets = {
+			["Purple Nebula"] = {"rbxassetid://159454299", "rbxassetid://159454296", "rbxassetid://159454293", "rbxassetid://159454286", "rbxassetid://159454300", "rbxassetid://159454288"},
+			["Vaporwave"] = {"rbxassetid://600832720", "rbxassetid://600833821", "rbxassetid://600835177", "rbxassetid://600833341", "rbxassetid://600834603", "rbxassetid://600835727"},
+			["Deep Space"] = {"rbxassetid://265805434", "rbxassetid://265805423", "rbxassetid://265805445", "rbxassetid://265805466", "rbxassetid://265805481", "rbxassetid://265805502"},
+			["Night Sky"] = {"rbxassetid://12064107", "rbxassetid://12064152", "rbxassetid://12064121", "rbxassetid://12064131", "rbxassetid://12064115", "rbxassetid://12064143"},
+			["Sunset"] = {"rbxassetid://924373456", "rbxassetid://924373468", "rbxassetid://924373479", "rbxassetid://924373497", "rbxassetid://924373508", "rbxassetid://924373523"},
+			["Blood Moon"] = {"rbxassetid://401664839", "rbxassetid://401664861", "rbxassetid://401664883", "rbxassetid://401664901", "rbxassetid://401664916", "rbxassetid://401664936"},
+			["Purple Planet"] = {"rbxassetid://16262356578", "rbxassetid://16262358026", "rbxassetid://16262360469", "rbxassetid://16262362003", "rbxassetid://16262363873", "rbxassetid://16262366016"}
+		}
+		local sky_obj, sky_lat, sky_hidden_clouds = nil, nil, {}
+		local function sky_clouds(off)
+			if not off then
+				for c, _ in sky_hidden_clouds do
+					pcall(function()
+						c.Enabled = true
+					end)
+				end
+				table.clear(sky_hidden_clouds)
+				return
+			end
+			local t = workspace.Terrain:FindFirstChildOfClass("Clouds")
+			if t then
+				sky_hidden_clouds[t] = true
+				t.Enabled = false
+			end
+			for _, c in game:GetService("Lighting"):GetChildren() do
+				if c:IsA("Clouds") then
+					sky_hidden_clouds[c] = true
+					c.Enabled = false
+				end
+			end
+		end
+		local function sky_apply()
+			local lighting = game:GetService("Lighting")
+			if not cheat.custom_skybox then
+				if sky_obj then
+					pcall(function() sky_obj:Destroy() end)
+					sky_obj = nil
+				end
+				if sky_lat then
+					lighting.GeographicLatitude = sky_lat
+					sky_lat = nil
+				end
+				sky_clouds(false)
+				return
+			end
+			if not sky_obj or sky_obj.Parent ~= lighting then
+				sky_obj = Instance.new("Sky")
+				sky_obj.Parent = lighting
+			end
+			for _, c in lighting:GetChildren() do
+				if c:IsA("Sky") and c ~= sky_obj then
+					pcall(function() c:Destroy() end)
+				end
+			end
+			local preset = skybox_presets[cheat.skybox_preset]
+			if preset then
+				local q = math.floor(((cheat.skybox_rotz % 360) + 45) / 90) % 4
+				local bk, ft, lf, rt = preset[1], preset[3], preset[4], preset[5]
+				if q == 1 then
+					bk, ft, lf, rt = preset[4], preset[5], preset[3], preset[1]
+				elseif q == 2 then
+					bk, ft, lf, rt = preset[3], preset[1], preset[5], preset[4]
+				elseif q == 3 then
+					bk, ft, lf, rt = preset[5], preset[4], preset[1], preset[3]
+				end
+				sky_obj.SkyboxBk = bk
+				sky_obj.SkyboxFt = ft
+				sky_obj.SkyboxLf = lf
+				sky_obj.SkyboxRt = rt
+				sky_obj.SkyboxDn = preset[2]
+				sky_obj.SkyboxUp = preset[6]
+			end
+			if sky_lat == nil then
+				sky_lat = lighting.GeographicLatitude
+			end
+			lighting.GeographicLatitude = math.clamp(cheat.skybox_rotx, -90, 90)
+			for _, c in lighting:GetChildren() do
+				if c:IsA("Atmosphere") then
+					if cheat.skybox_brightness == 100 then
+						c.Density = 0
+						c.Haze = 0
+						c.Glare = 0
+						c.Offset = 0
+					elseif cheat.skybox_brightness > 100 then
+						local v = (cheat.skybox_brightness - 100) / 100
+						c.Density = 0.001
+						c.Haze = v * 1.5
+						c.Glare = v * 3
+						c.Offset = v * 0.2
+						c.Color = Color3.fromRGB(255, 255, 255)
+					else
+						c.Density = 0.001
+						c.Haze = 0
+						c.Glare = 0
+						c.Offset = 0
+						local g = math.floor(255 * (1 - cheat.skybox_brightness / 100))
+						c.Color = Color3.fromRGB(g, g, g)
+					end
+				end
+			end
+			sky_clouds(true)
+		end
+		local sky_preset_dropdown, sky_bright_slider, sky_rotx_slider, sky_rotz_slider = nil, nil, nil, nil
+		local sky_toggle = mscsec:Toggle({Name = "Custom skybox", Value = false, Flag = "view_custom_skybox", Callback = function(bool)
+			cheat.custom_skybox = bool
+			local vis = bool and true or false
+			if sky_preset_dropdown then sky_preset_dropdown.State(vis) end
+			if sky_bright_slider then sky_bright_slider.State(vis) end
+			if sky_rotx_slider then sky_rotx_slider.State(vis) end
+			if sky_rotz_slider then sky_rotz_slider.State(vis) end
+			sky_apply()
+		end})
+		sky_preset_dropdown = mscsec:Dropdown({Name = "Skybox preset", Values = {"Purple Nebula", "Vaporwave", "Deep Space", "Night Sky", "Sunset", "Blood Moon", "Purple Planet"}, Value = "Purple Nebula", Flag = "view_skybox_preset", Multi = false, Callback = function(str)
+			cheat.skybox_preset = str
+			sky_apply()
+		end})
+		sky_preset_dropdown.State(false)
+		sky_bright_slider = mscsec:Slider({Name = "Skybox brightness", Min = 10, Max = 1000, Float = 1, Value = 100, Flag = "view_skybox_brightness", Suffix = "%s%%", Callback = function(int)
+			cheat.skybox_brightness = int
+			sky_apply()
+		end})
+		sky_bright_slider.State(false)
+		sky_rotx_slider = mscsec:Slider({Name = "Skybox rotation X", Min = -90, Max = 90, Float = 1, Value = 0, Flag = "view_skybox_rotx", Callback = function(int)
+			cheat.skybox_rotx = int
+			sky_apply()
+		end})
+		sky_rotx_slider.State(false)
+		sky_rotz_slider = mscsec:Slider({Name = "Skybox rotation Z", Min = 0, Max = 360, Float = 1, Value = 0, Flag = "view_skybox_rotz", Callback = function(int)
+			cheat.skybox_rotz = int
+			sky_apply()
+		end})
+		sky_rotz_slider.State(false)
+		game:GetService("Lighting").ChildAdded:Connect(function(child)
+			if cheat.custom_skybox and (child:IsA("Atmosphere") or child:IsA("Clouds")) then
+				sky_apply()
+			end
+		end)
+		cheat.no_leafs = false
+		local function sweep_leafs()
+			local sz = workspace:FindFirstChild("SpawnerZones")
+			local fol = sz and sz:FindFirstChild("Foliage")
+			if not fol then return end
+			local stack = {fol}
+			local n = 0
+			while #stack > 0 do
+				local node = table.remove(stack)
+				for _, child in node:GetChildren() do
+					table.insert(stack, child)
+					if child:FindFirstChildOfClass("SurfaceAppearance") then
+						child.Transparency = cheat.no_leafs and 1 or 0
+					end
+				end
+				n += 1
+				if n % 150 == 0 then
+					task.wait()
+				end
+			end
+		end
+		mscsec:Toggle({Name = "No leafs", Value = false, Flag = "view_no_leafs", Callback = function(bool)
+			cheat.no_leafs = bool
+			sweep_leafs()
+			if bool then
+				task.spawn(function()
+					while task.wait(10) do
+						if not cheat.no_leafs then return end
+						sweep_leafs()
+					end
+				end)
+			end
 		end})
 
 		mscsec:Toggle({Name = "Aspect ratio", Value = false, Flag = "view_aspect_ratio", Callback = function(bool)
@@ -8427,6 +10283,560 @@ do
 		mscsec:Slider({Name = "Aspect Y", Min = 0.5, Max = 1.1, Float = 0.01, Value = 1, Flag = "aspect_ratio_y", Callback = function(int)
 			aspect_ratio_y = int
 		end})
+
+		cheat.raid_info = false
+		mscsec:Toggle({Name = "Raid info", Value = false, Flag = "raid_info", Callback = function(bool)
+			cheat.raid_info = bool
+		end})
+		do
+			local raid_tick = 0
+			local price_cache = {}
+			local raid_gui = Instance.new("ScreenGui")
+			raid_gui.Name = "SwimRaidInfo"
+			raid_gui.ResetOnSpawn = false
+			raid_gui.IgnoreGuiInset = true
+			raid_gui.DisplayOrder = -1
+			raid_gui.Enabled = false
+			raid_gui.Parent = game:GetService("CoreGui")
+			local raid_outer = Instance.new("Frame")
+			raid_outer.Name = "Panel"
+			raid_outer.Size = UDim2.fromOffset(220, 132)
+			raid_outer.Position = UDim2.new(0, 40, 0, 120)
+			raid_outer.BackgroundColor3 = Color3.fromRGB(19, 19, 19)
+			raid_outer.BorderSizePixel = 0
+			raid_outer.AnchorPoint = Vector2.new(0, 0)
+			raid_outer.Active = true
+			raid_outer.Parent = raid_gui
+			do
+				local drag, ox, oy, mx, my = false, 0, 0, 0, 0
+				raid_outer.InputBegan:Connect(function(input)
+					if input.UserInputType == Enum.UserInputType.MouseButton1 then
+						drag = true
+						ox, oy = raid_outer.Position.X.Offset, raid_outer.Position.Y.Offset
+						mx, my = input.Position.X, input.Position.Y
+					end
+				end)
+				UserInputService.InputChanged:Connect(function(input)
+					if drag and input.UserInputType == Enum.UserInputType.MouseMovement then
+						local vs = Camera.ViewportSize
+						raid_outer.Position = UDim2.new(0, math.clamp(ox + input.Position.X - mx, 0, math.max(vs.X - raid_outer.AbsoluteSize.X, 0)), 0, math.clamp(oy + input.Position.Y - my, 0, math.max(vs.Y - raid_outer.AbsoluteSize.Y, 0)))
+					end
+				end)
+				UserInputService.InputEnded:Connect(function(input)
+					if input.UserInputType == Enum.UserInputType.MouseButton1 then drag = false end
+				end)
+			end
+			local raid_stroke = Instance.new("UIStroke")
+			raid_stroke.Thickness = 1
+			raid_stroke.Color = Library.Theme.accent
+			raid_stroke.Parent = raid_outer
+			local raid_title = Instance.new("TextLabel")
+			raid_title.BackgroundTransparency = 1
+			raid_title.BorderSizePixel = 0
+			raid_title.Position = UDim2.new(0, 8, 0, 4)
+			raid_title.Size = UDim2.new(1, -16, 0, 16)
+			raid_title.FontFace = Fonts.Get("TahomaXP")
+			raid_title.TextSize = 12
+			raid_title.TextXAlignment = Enum.TextXAlignment.Left
+			raid_title.TextColor3 = Library.Theme.accent
+			raid_title.Text = "Raid info"
+			raid_title.Parent = raid_outer
+			local raid_rows = {}
+			local raid_defs = {"Players", "Loot", "Top item", "K/D", "Reports", "HSR"}
+			for i, name in raid_defs do
+				local l = Instance.new("TextLabel")
+				l.BackgroundTransparency = 1
+				l.BorderSizePixel = 0
+				l.Position = UDim2.new(0, 8, 0, 22 + (i - 1) * 16)
+				l.Size = UDim2.new(0.5, -8, 0, 16)
+				l.FontFace = Fonts.Get("TahomaXP")
+				l.TextSize = 12
+				l.TextXAlignment = Enum.TextXAlignment.Left
+				l.TextColor3 = Color3.fromRGB(230, 230, 230)
+				l.Text = name
+				l.Parent = raid_outer
+				local v = Instance.new("TextLabel")
+				v.BackgroundTransparency = 1
+				v.BorderSizePixel = 0
+				v.Position = UDim2.new(0.5, 0, 0, 22 + (i - 1) * 16)
+				v.Size = UDim2.new(0.5, -8, 0, 16)
+				v.FontFace = Fonts.Get("TahomaXP")
+				v.TextSize = 12
+				v.TextXAlignment = Enum.TextXAlignment.Right
+				v.TextColor3 = Color3.fromRGB(230, 230, 230)
+				v.TextTruncate = Enum.TextTruncate.AtEnd
+				v.Text = "-"
+				v.Parent = raid_outer
+				raid_rows[name] = v
+			end
+			local function item_base(name)
+				return tostring(name):gsub("_unlocked$", ""):gsub("_T%d+$", "")
+			end
+			local function item_price(name)
+				if price_cache[name] ~= nil then return price_cache[name] end
+				local list = game:GetService("ReplicatedStorage"):FindFirstChild("ItemsList")
+				local item = list and (list:FindFirstChild(name) or list:FindFirstChild(item_base(name)))
+				local props = item and item:FindFirstChild("ItemProperties")
+				local price = props and tonumber(props:GetAttribute("Price")) or 0
+				if #price_cache < 2000 then price_cache[name] = price end
+				return price
+			end
+			local function inventory_value(folder, depth)
+				if not folder or depth > 6 then return 0, nil, 0 end
+				local total, best_name, best_value = 0, nil, 0
+				for _, obj in folder:GetChildren() do
+					local amount = tonumber(obj:GetAttribute("Amount")) or 1
+					local value = item_price(obj.Name) * math.max(1, math.floor(amount))
+					total += value
+					if value > best_value then
+						best_value, best_name = value, obj.Name
+					end
+					local nested = obj:FindFirstChild("Inventory")
+					local child_value, child_name, child_best = inventory_value(nested, depth + 1)
+					total += child_value
+					if child_best > best_value then
+						best_value, best_name = child_best, child_name
+					end
+				end
+				return total, best_name, best_value
+			end
+			cheat.utility.new_renderstepped(function()
+				if not cheat.raid_info then
+					raid_gui.Enabled = false
+					return
+				end
+				raid_gui.Enabled = true
+				local now = os.clock()
+				if now - raid_tick < 1.5 then return end
+				raid_tick = now
+				local folder = game:GetService("ReplicatedStorage"):FindFirstChild("Players")
+				local data = folder and folder:FindFirstChild(LocalPlayer.Name)
+				local status = data and data:FindFirstChild("Status")
+				local journey = status and status:FindFirstChild("Journey")
+				local stats = journey and journey:FindFirstChild("Statistics")
+				local gameplay = status and status:FindFirstChild("GameplayVariables")
+				local kills = stats and (stats:GetAttribute("K_PVP") or stats:GetAttribute("Kills")) or 0
+				local deaths = stats and (stats:GetAttribute("D_PVP") or stats:GetAttribute("Deaths")) or 0
+				local kd = kills / math.max(1, deaths or 0)
+				local reps = 0
+				local uac = status and status:FindFirstChild("UAC")
+				local repf = uac and uac:FindFirstChild("Reports")
+				if repf then
+					local amount = repf:GetAttribute("Amount")
+					if typeof(amount) == "number" then
+						reps = math.max(0, math.floor(amount))
+					else
+						for i = 0, 10 do
+							local value = repf:GetAttribute(tostring(i))
+							if typeof(value) == "number" then reps += value end
+						end
+					end
+				end
+				local hs, bs = 0, 0
+				local combat = gameplay and gameplay:FindFirstChild("Combat")
+				if combat then
+					hs = combat:GetAttribute("Headshots") or 0
+					bs = combat:GetAttribute("Bodyshots") or 0
+				end
+				local hsr = (hs + bs) > 0 and math.ceil(hs / (hs + bs) * 100) or 0
+				local total_value, best_name, best_value = inventory_value(data and data:FindFirstChild("Inventory"), 0)
+				local hotbar_value = inventory_value(data and data:FindFirstChild("Hotbar"), 0)
+				total_value += hotbar_value
+				raid_rows["Players"].Text = tostring(#Players:GetPlayers())
+				raid_rows["Loot"].Text = tostring(total_value)
+				raid_rows["Top item"].Text = (best_name or "-") .. " (" .. best_value .. ")"
+				raid_rows["K/D"].Text = kills .. "/" .. deaths .. " (" .. ("%.1f"):format(kd) .. ")"
+				raid_rows["Reports"].Text = tostring(reps)
+				raid_rows["HSR"].Text = hsr .. "%"
+			end)
+		end
+		local boss_toggle = mscsec:Toggle({Name = "Boss tracker", Value = false, Flag = "boss_tracker", Callback = function(bool)
+			cheat.boss_tracker = bool
+		end})
+		cheat.boss_notify = false
+		mscsec:Toggle({Name = "Boss spawn notify", Value = false, Flag = "boss_notify", Callback = function(bool)
+			cheat.boss_notify = bool
+		end})
+		do
+			local boss_defs = {
+				Anton = Color3.fromRGB(255, 140, 50),
+				Dozer = Color3.fromRGB(255, 112, 112),
+				Whisper = Color3.fromRGB(180, 100, 255),
+				ScavKing = Color3.fromRGB(255, 192, 50),
+				Grif = Color3.fromRGB(90, 190, 255),
+				BTR80 = Color3.fromRGB(100, 255, 150),
+				MI24V = Color3.fromRGB(100, 255, 150),
+				Death = Color3.fromRGB(220, 20, 60)
+			}
+			local boss_order = {"Anton", "Dozer", "Whisper", "ScavKing", "Grif", "BTR80", "MI24V", "Death"}
+			local boss_gui = Instance.new("ScreenGui")
+			boss_gui.Name = "SwimBossTracker"
+			boss_gui.ResetOnSpawn = false
+			boss_gui.IgnoreGuiInset = true
+			boss_gui.DisplayOrder = -1
+			boss_gui.Enabled = false
+			boss_gui.Parent = game:GetService("CoreGui")
+			local boss_outer = Instance.new("Frame")
+			boss_outer.Name = "Panel"
+			boss_outer.AnchorPoint = Vector2.new(0, 0)
+			do
+				local vs = Camera and Camera.ViewportSize or Vector2.new(1280, 720)
+				boss_outer.Position = UDim2.new(0, math.max(vs.X - 270, 0), 0, 120)
+			end
+			boss_outer.Size = UDim2.fromOffset(230, 190)
+			boss_outer.BackgroundColor3 = Color3.fromRGB(19, 19, 19)
+			boss_outer.BorderSizePixel = 0
+			boss_outer.Active = true
+			boss_outer.Parent = boss_gui
+			do
+				local drag, ox, oy, mx, my = false, 0, 0, 0, 0
+				boss_outer.InputBegan:Connect(function(input)
+					if input.UserInputType == Enum.UserInputType.MouseButton1 then
+						drag = true
+						ox, oy = boss_outer.Position.X.Offset, boss_outer.Position.Y.Offset
+						mx, my = input.Position.X, input.Position.Y
+					end
+				end)
+				UserInputService.InputChanged:Connect(function(input)
+					if drag and input.UserInputType == Enum.UserInputType.MouseMovement then
+						local vs = Camera.ViewportSize
+						boss_outer.Position = UDim2.new(0, math.clamp(ox + input.Position.X - mx, 0, math.max(vs.X - boss_outer.AbsoluteSize.X, 0)), 0, math.clamp(oy + input.Position.Y - my, 0, math.max(vs.Y - boss_outer.AbsoluteSize.Y, 0)))
+					end
+				end)
+				UserInputService.InputEnded:Connect(function(input)
+					if input.UserInputType == Enum.UserInputType.MouseButton1 then drag = false end
+				end)
+			end
+			local boss_stroke = Instance.new("UIStroke")
+			boss_stroke.Thickness = 1
+			boss_stroke.Color = Library.Theme.accent
+			boss_stroke.Parent = boss_outer
+			local boss_title = Instance.new("TextLabel")
+			boss_title.BackgroundTransparency = 1
+			boss_title.BorderSizePixel = 0
+			boss_title.Position = UDim2.new(0, 8, 0, 4)
+			boss_title.Size = UDim2.new(1, -16, 0, 16)
+			boss_title.FontFace = Fonts.Get("TahomaXP")
+			boss_title.TextSize = 12
+			boss_title.TextXAlignment = Enum.TextXAlignment.Left
+			boss_title.TextColor3 = Library.Theme.accent
+			boss_title.Text = "Boss tracker"
+			boss_title.Parent = boss_outer
+			local boss_empty = Instance.new("TextLabel")
+			boss_empty.BackgroundTransparency = 1
+			boss_empty.BorderSizePixel = 0
+			boss_empty.Position = UDim2.new(0, 8, 0, 22)
+			boss_empty.Size = UDim2.new(1, -16, 0, 16)
+			boss_empty.FontFace = Fonts.Get("TahomaXP")
+			boss_empty.TextSize = 12
+			boss_empty.TextXAlignment = Enum.TextXAlignment.Left
+			boss_empty.TextColor3 = Color3.fromRGB(230, 230, 230)
+			boss_empty.TextTruncate = Enum.TextTruncate.AtEnd
+			boss_empty.Text = "no bosses alive"
+			boss_empty.Visible = false
+			boss_empty.Parent = boss_outer
+			local boss_rows = {}
+			for i, name in boss_order do
+				local row = Instance.new("Frame")
+				row.BackgroundTransparency = 1
+				row.BorderSizePixel = 0
+				row.Position = UDim2.new(0, 8, 0, 22 + (i - 1) * 20)
+				row.Size = UDim2.new(1, -16, 0, 20)
+				row.Visible = false
+				row.Parent = boss_outer
+				local pip = Instance.new("Frame")
+				pip.AnchorPoint = Vector2.new(0, 0.5)
+				pip.Position = UDim2.new(0, 0, 0.5, 0)
+				pip.Size = UDim2.fromOffset(6, 6)
+				pip.BorderSizePixel = 0
+				pip.BackgroundColor3 = boss_defs[name]
+				pip.Parent = row
+				local n = Instance.new("TextLabel")
+				n.BackgroundTransparency = 1
+				n.BorderSizePixel = 0
+				n.Position = UDim2.new(0, 10, 0, 0)
+				n.Size = UDim2.new(0.45, -10, 1, 0)
+				n.FontFace = Fonts.Get("TahomaXP")
+				n.TextSize = 12
+				n.TextXAlignment = Enum.TextXAlignment.Left
+				n.TextColor3 = boss_defs[name]
+				n.TextTruncate = Enum.TextTruncate.AtEnd
+				n.Text = name
+				n.Parent = row
+				local info = Instance.new("TextLabel")
+				info.BackgroundTransparency = 1
+				info.BorderSizePixel = 0
+				info.Position = UDim2.new(0.45, 0, 0, 0)
+				info.Size = UDim2.new(0.55, 0, 1, 0)
+				info.FontFace = Fonts.Get("TahomaXP")
+				info.TextSize = 12
+				info.TextXAlignment = Enum.TextXAlignment.Right
+				info.TextColor3 = Color3.fromRGB(230, 230, 230)
+				info.TextTruncate = Enum.TextTruncate.AtEnd
+				info.Text = ""
+				info.Parent = row
+				local barbg = Instance.new("Frame")
+				barbg.Position = UDim2.new(0, 10, 1, -4)
+				barbg.Size = UDim2.new(1, -10, 0, 3)
+				barbg.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
+				barbg.BorderSizePixel = 0
+				barbg.Parent = row
+				local bar = Instance.new("Frame")
+				bar.Size = UDim2.new(1, 0, 1, 0)
+				bar.BackgroundColor3 = boss_defs[name]
+				bar.BorderSizePixel = 0
+				bar.Parent = barbg
+				boss_rows[name] = {row = row, info = info, bar = bar}
+			end
+			local boss_seen = {}
+			local boss_tick = 0
+			local function boss_anchor(model)
+				return _FindFirstChild(model, "HumanoidRootPart") or _FindFirstChild(model, "Head") or _FindFirstChild(model, "UpperTorso") or _FindFirstChild(model, "Chassis") or model.PrimaryPart or model:FindFirstChildWhichIsA("BasePart", true)
+			end
+			cheat.utility.new_renderstepped(function()
+				if not cheat.boss_tracker then
+					boss_gui.Enabled = false
+					return
+				end
+				boss_gui.Enabled = true
+				local now = os.clock()
+				if now - boss_tick < 0.5 then return end
+				boss_tick = now
+				local campos = Camera.CFrame.Position
+				local found = {}
+				local zones = workspace:FindFirstChild("AiZones")
+				local function scan_boss_zone(zone, depth)
+					if depth > 6 then return end
+					for _, model in zone:GetChildren() do
+							if model:IsA("Model") and boss_defs[model.Name] then
+								local hum = _FindFirstChildOfClass(model, "Humanoid")
+								local alive = false
+								local hp, maxhp = 0, 0
+								if hum then
+									alive = hum.Health > 0
+									hp, maxhp = math.floor(hum.Health), math.floor(hum.MaxHealth)
+								else
+									local root = boss_anchor(model)
+									local h = root and root:GetAttribute("Health")
+									if h then
+										hp = math.floor(h)
+										alive = hp ~= 0
+									end
+								end
+								if alive then
+									local anchor = boss_anchor(model)
+									if anchor then
+										found[model.Name] = true
+										if not boss_seen[model.Name] then
+											boss_seen[model.Name] = true
+											if cheat.boss_notify then
+												Library.Notification("BOSS SPAWNED: " .. model.Name .. " (" .. zone.Name .. ")", 5)
+											end
+										end
+										local dist = math.floor((campos - anchor.Position).Magnitude / 3)
+										local hps = maxhp > 0 and (" " .. math.floor(hp / maxhp * 100) .. "%") or (hp > 0 and (" " .. hp) or "")
+										local brow = boss_rows[model.Name]
+										if brow then
+											brow.info.Text = (zone.Name or "?") .. "  " .. dist .. "m" .. hps
+											brow.row.Visible = true
+											local k = maxhp > 0 and math.clamp(hp / maxhp, 0, 1) or 1
+											brow.bar.Size = UDim2.new(k, 0, 1, 0)
+											brow.bar.BackgroundColor3 = k < 0.5 and Color3.fromRGB(225, 65, 65):Lerp(Color3.fromRGB(235, 200, 70), k / 0.5) or Color3.fromRGB(235, 200, 70):Lerp(Color3.fromRGB(75, 215, 95), (k - 0.5) / 0.5)
+										end
+									end
+								end
+							end
+							if #model:GetChildren() > 0 then
+								scan_boss_zone(model, depth + 1)
+							end
+						end
+					end
+				if zones then
+					scan_boss_zone(zones, 0)
+				end
+				for _, name in boss_order do
+					local brow = boss_rows[name]
+					if brow and not found[name] then
+						brow.row.Visible = false
+					end
+				end
+				boss_empty.Visible = next(found) == nil
+				for name, _ in boss_seen do
+					if not found[name] then
+						boss_seen[name] = nil
+					end
+				end
+			end)
+		end
+		cheat.map_esp = false
+		cheat.map_esp_names = false
+		mscsec:Toggle({Name = "Map esp", Value = false, Flag = "map_esp", Callback = function(bool)
+			cheat.map_esp = bool
+		end})
+		mscsec:Toggle({Name = "Map esp names", Value = false, Flag = "map_esp_names", Callback = function(bool)
+			cheat.map_esp_names = bool
+		end})
+			do
+			local map_marks = {}
+			local map_names = {}
+			local map_tick = 0
+			local map_origin = Vector2.new(208, -203)
+			local map_layer
+			local function map_hide()
+				for _, m in map_marks do
+					m.Visible = false
+				end
+				for _, t in map_names do
+					t.Visible = false
+				end
+			end
+			local function map_layer_setup(mapf)
+				if map_layer and map_layer.Parent == mapf then
+					return true
+				end
+				map_layer = nil
+				map_marks = {}
+				map_names = {}
+				local old = mapf:FindFirstChild("DeltaMapMarkers")
+				if old then old:Destroy() end
+				local layer = Instance.new("Frame")
+				layer.Name = "DeltaMapMarkers"
+				layer.BackgroundTransparency = 1
+				layer.Size = UDim2.fromScale(1, 1)
+				local markers = mapf:FindFirstChild("Markers")
+				if markers and markers:IsA("GuiObject") then
+					layer.Size = markers.Size
+					layer.Position = markers.Position
+					layer.AnchorPoint = markers.AnchorPoint
+				end
+				local z = 6
+				for _, child in mapf:GetChildren() do
+					if child:IsA("GuiObject") and child.Name ~= "DeltaMapMarkers" and child.ZIndex >= z then
+						z = child.ZIndex + 1
+					end
+				end
+				layer.ZIndex = z
+				layer.Parent = mapf
+				map_layer = layer
+				return true
+			end
+			cheat.utility.new_renderstepped(function()
+				if not cheat.map_esp then
+					map_hide()
+					return
+				end
+				local now = os.clock()
+				if now - map_tick < 0.25 then return end
+				map_tick = now
+				local gui = LocalPlayer.PlayerGui
+				local main = gui and _FindFirstChild(gui, "MainGui")
+				main = main and _FindFirstChild(main, "MainFrame")
+				local mapf = main and _FindFirstChild(main, "MapFrame")
+				mapf = mapf and _FindFirstChild(mapf, "MainFrame")
+				if not mapf or not mapf.Visible then
+					map_hide()
+					return
+				end
+				local maps = _FindFirstChild(mapf, "Maps")
+				if not maps then
+					map_hide()
+					return
+				end
+				local frame = nil
+				for _, f in maps:GetChildren() do
+					if f:IsA("GuiObject") and f.Visible then
+						frame = f
+						break
+					end
+				end
+				if not frame then
+					local want = workspace:GetAttribute("MapName")
+					if want then
+						for _, f in maps:GetChildren() do
+							if f:GetAttribute("MapName") == want then frame = f break end
+						end
+					end
+				end
+				if not frame then
+					for _, f in maps:GetChildren() do
+						if type(f:GetAttribute("SizeReal")) == "number" then frame = f break end
+					end
+				end
+				if not frame then
+					map_hide()
+					return
+				end
+				local k = frame:GetAttribute("SizeReal")
+				if typeof(k) ~= "number" or k == 0 then
+					map_hide()
+					return
+				end
+				map_layer_setup(mapf)
+				local dot_n, name_n = 0, 0
+				local show_names = cheat.map_esp_names
+				local function mark(worldpos, color, name, size)
+					dot_n += 1
+					local m = map_marks[dot_n]
+					if not m then
+						m = Instance.new("Frame")
+						m.AnchorPoint = Vector2.new(0.5, 0.5)
+						m.BorderSizePixel = 0
+						m.Parent = map_layer
+						local corner = Instance.new("UICorner")
+						corner.CornerRadius = UDim.new(1, 0)
+						corner.Parent = m
+						local stroke = Instance.new("UIStroke")
+						stroke.Thickness = 1
+						stroke.Color = Color3.fromRGB(0, 0, 0)
+						stroke.Parent = m
+						map_marks[dot_n] = m
+					end
+					local d = 0.5 + (worldpos.X - map_origin.X) / k
+					local y = 0.5 + (worldpos.Z - map_origin.Y) / k
+					local sz = size or 8
+					m.Position = UDim2.new(d, 0, y, 0)
+					m.Size = UDim2.fromOffset(sz, sz)
+					m.BackgroundColor3 = color
+					m.Visible = true
+					if show_names and name then
+						name_n += 1
+						local t = map_names[name_n]
+						if not t then
+							t = Instance.new("TextLabel")
+							t.AnchorPoint = Vector2.new(0.5, 1)
+							t.BackgroundTransparency = 1
+							t.BorderSizePixel = 0
+							t.FontFace = Fonts.Get("TahomaXP")
+							t.TextSize = 12
+							t.TextColor3 = color
+							t.TextStrokeTransparency = 0
+							t.Parent = map_layer
+							map_names[name_n] = t
+						end
+						t.Position = UDim2.new(d, 0, y, -(sz * 0.5 + 2))
+						t.Size = UDim2.fromOffset(160, 16)
+						t.Text = name
+						t.TextColor3 = color
+						t.Visible = true
+					end
+				end
+				for _, player in Players:GetPlayers() do
+					if player ~= LocalPlayer and player.Character then
+						local hrp = _FindFirstChild(player.Character, "HumanoidRootPart")
+						local hum = _FindFirstChildOfClass(player.Character, "Humanoid")
+						if hrp and hum and hum.Health > 0 then
+							mark(hrp.Position, Color3.fromRGB(255, 60, 60), player.Name)
+						end
+					end
+				end
+				for i = dot_n + 1, #map_marks do
+					map_marks[i].Visible = false
+				end
+				for i = name_n + 1, #map_names do
+					map_names[i].Visible = false
+				end
+			end)
+		end
 
 
 
@@ -8624,12 +11034,13 @@ do
 			wanted_plr_model:Destroy()
 		end
 
-		mscsec:Toggle({Name = "Avatar changer", Value = false, Flag = "view_avatar_changer", Callback = function(bool)
+		local avatar_userid_textbox = nil
+		local avatar_toggle = mscsec:Toggle({Name = "Avatar changer", Value = false, Flag = "view_avatar_changer", Callback = function(bool)
 			avatar_changer = bool
+			if avatar_userid_textbox then avatar_userid_textbox.State(bool) end
 			task.spawn(change_avatar)
 		end})
-
-		mscsec:Textbox({
+		avatar_userid_textbox = mscsec:Textbox({
 			Name = "Avatar UserId",
 			Value = "80254",
 			Flag = "view_avatar_userid",
@@ -8637,6 +11048,7 @@ do
 				task.spawn(change_avatar)
 			end
 		})
+		avatar_userid_textbox.State(false)
 
 		local character_childadded
 		if LocalPlayer.Character then
@@ -8783,41 +11195,51 @@ do
 			local off_transparency, on_transparency = 0, 0
 
 			do
+				local visor_font_dropdown, visor_size_slider, visor_x_slider, visor_y_slider = nil, nil, nil, nil
 				local toggle = lclsec:Toggle({Name = "Visor indicator", Value = false, Flag = "visor_indicator", Callback = function(bool)
 					indicator_holder.Visible = bool
+					local vis = bool and true or false
+					if visor_font_dropdown then visor_font_dropdown.State(vis) end
+					if visor_size_slider then visor_size_slider.State(vis) end
+					if visor_x_slider then visor_x_slider.State(vis) end
+					if visor_y_slider then visor_y_slider.State(vis) end
 				end})
-				toggle:Colorpicker({Name = "Indicator Off Color", Value = Color3.new(1, 0.3, 0.3), Usealpha = true, Flag = "visor_indicator_off_color", Callback = function(color)
+				toggle:Colorpicker({Name = "Indicator off Color", Value = Color3.new(1, 0.3, 0.3), Usealpha = true, Flag = "visor_indicator_off_color", Callback = function(color)
 					off_color = color.c
 					off_transparency = color.a
 				end})
-				toggle:Colorpicker({Name = "Indicator On Color", Value = Color3.new(0.3, 1, 0.3), Usealpha = true, Flag = "visor_indicator_on_color", Callback = function(color)
+				toggle:Colorpicker({Name = "Indicator on Color", Value = Color3.new(0.3, 1, 0.3), Usealpha = true, Flag = "visor_indicator_on_color", Callback = function(color)
 					on_color = color.c
 					on_transparency = color.a
 				end})
-			end
-			lclsec:Dropdown({Name = "Indicator font", Values = {
-				"Tahoma",
-				"TahomaXP",
-				"Comfortaa",
-				"Verdana",
-				"SmallestPixel7",
-				"Proggy",
-			}, Value = {"SmallestPixel7"}, Flag = "visor_indicator_font", Multi = false, Callback = function(str)
-				indicator_text.FontFace = Fonts.Get(str or "SmallestPixel7") or default_font
-			end})
-			lclsec:Slider({Name = "Indicator size", Min = 1, Max = 30, Float = 1, Value = 9, Flag = "visor_indicator_size", Suffix = "%spx", Callback = function(int)
-				indicator_text.TextSize = int
-			end})
-			lclsec:Slider({Name = "Indicator X", Min = 0, Max = 100, Float = 1, Value = 5, Flag = "visor_indicator_x", Suffix = "%s%%", Callback = function(int)
-				indicator_holder.Position = UDim2.new(int / 100, -GuiInset.X, indicator_holder.Position.Y.Scale, -GuiInset.Y)
-				indicator_text.TextXAlignment = int < 50 and Enum.TextXAlignment.Left or int > 50 and Enum.TextXAlignment.Right or Enum.TextXAlignment.Center
-				indicator_text.Position = UDim2.new(int < 50 and 0 or int > 50 and 1 or 0.5, 0, 0, 0)
-				indicator_text.AnchorPoint = Vector2.new(int < 50 and 0 or int > 50 and 1 or 0.5, 0)
-			end})
-			lclsec:Slider({Name = "Indicator Y", Min = 0, Max = 100, Float = 1, Value = 5, Flag = "visor_indicator_y", Suffix = "%s%%", Callback = function(int)
-				indicator_holder.Position = UDim2.new(indicator_holder.Position.X.Scale, -GuiInset.X, int / 100, -GuiInset.Y)
+				visor_font_dropdown = lclsec:Dropdown({Name = "Indicator font", Values = {
+					"Tahoma",
+					"TahomaXP",
+					"Comfortaa",
+					"Verdana",
+					"SmallestPixel7",
+					"Proggy",
+				}, Value = {"SmallestPixel7"}, Flag = "visor_indicator_font", Multi = false, Callback = function(str)
+					indicator_text.FontFace = Fonts.Get(str or "SmallestPixel7") or default_font
+				end})
+				visor_font_dropdown.State(false)
+				visor_size_slider = lclsec:Slider({Name = "Indicator size", Min = 1, Max = 30, Float = 1, Value = 9, Flag = "visor_indicator_size", Suffix = "%spx", Callback = function(int)
+					indicator_text.TextSize = int
+				end})
+				visor_size_slider.State(false)
+				visor_x_slider = lclsec:Slider({Name = "Indicator X", Min = 0, Max = 100, Float = 1, Value = 5, Flag = "visor_indicator_x", Suffix = "%s%%", Callback = function(int)
+					indicator_holder.Position = UDim2.new(int / 100, -GuiInset.X, indicator_holder.Position.Y.Scale, -GuiInset.Y)
+					indicator_text.TextXAlignment = int < 50 and Enum.TextXAlignment.Left or int > 50 and Enum.TextXAlignment.Right or Enum.TextXAlignment.Center
+					indicator_text.Position = UDim2.new(int < 50 and 0 or int > 50 and 1 or 0.5, 0, 0, 0)
+					indicator_text.AnchorPoint = Vector2.new(int < 50 and 0 or int > 50 and 1 or 0.5, 0)
+				end})
+				visor_x_slider.State(false)
+				visor_y_slider = lclsec:Slider({Name = "Indicator Y", Min = 0, Max = 100, Float = 1, Value = 5, Flag = "visor_indicator_y", Suffix = "%s%%", Callback = function(int)
+					indicator_holder.Position = UDim2.new(indicator_holder.Position.X.Scale, -GuiInset.X, int / 100, -GuiInset.Y)
 
-			end})
+				end})
+				visor_y_slider.State(false)
+			end
 
 			local lpo = cheat.player_list[LocalPlayer]
 			cheat.utility.new_heartbeat(LPH_JIT(function()
@@ -8836,30 +11258,145 @@ do
 			no_screen_effects = bool
 		end})
 
-		lclsec:Toggle({Name = "Gun changer", Value = false, Flag = "gun_changer", Callback = function(bool)
-			gun_changer = bool
+		cheat.mute_breathing = false
+		local breath_sound = nil
+		local breath_tick = 0
+		local function mute_breath(deep)
+			if breath_sound and breath_sound.Parent then
+				breath_sound.Playing = false
+				breath_sound.Volume = 0
+				pcall(function() breath_sound:Stop() end)
+				return true
+			end
+			local gui = LocalPlayer:FindFirstChildOfClass("PlayerGui")
+			local main = gui and _FindFirstChild(gui, "NoInsetGui")
+			main = main and _FindFirstChild(main, "MainFrame")
+			local fx = main and _FindFirstChild(main, "ScreenEffects")
+			local mask = fx and _FindFirstChild(fx, "Mask")
+			local gp5 = mask and _FindFirstChild(mask, "GP5")
+			local gas = gp5 and _FindFirstChild(gp5, "GasMask")
+			if gas and gas:IsA("Sound") then
+				breath_sound = gas
+				gas.Playing = false
+				gas.Volume = 0
+				pcall(function() gas:Stop() end)
+				return true
+			elseif deep and fx then
+				for _, d in fx:GetDescendants() do
+					if d:IsA("Sound") then
+						local nm = string.lower(d.Name)
+						if string.find(nm, "gas", 1, true) or string.find(nm, "breath", 1, true) then
+							breath_sound = d
+							d.Playing = false
+							d.Volume = 0
+							pcall(function() d:Stop() end)
+						end
+					end
+				end
+				return false
+			end
+			return false
+		end
+		lclsec:Toggle({Name = "Mute breathing", Value = false, Flag = "lcl_mute_breathing", Callback = function(bool)
+			cheat.mute_breathing = bool
+			if bool then
+				mute_breath(true)
+			end
 		end})
-		lclsec:Colorpicker({Name = "Gun color", Value = Color3.new(1, 1, 1), Usealpha = false, Flag = "gun_color", Callback = function(color)
+		cheat.utility.new_heartbeat(function()
+			if cheat.mute_breathing and tick() - breath_tick > 0.25 then
+				breath_tick = tick()
+				mute_breath(not (breath_sound and breath_sound.Parent))
+			end
+		end)
+
+		local gun_color_picker, gun_mat_dropdown = nil, nil
+		local gun_toggle = lclsec:Toggle({Name = "Gun changer", Value = false, Flag = "gun_changer", Callback = function(bool)
+			gun_changer = bool
+			local vis = bool and true or false
+			if gun_color_picker then gun_color_picker.State(vis) end
+			if gun_mat_dropdown then gun_mat_dropdown.State(vis) end
+		end})
+		gun_color_picker = lclsec:Colorpicker({Name = "Gun color", Value = Color3.new(1, 1, 1), Usealpha = false, Flag = "gun_color", Callback = function(color)
 			gun_color = color.c
 		end})
-		lclsec:Dropdown({Name = "Gun material", Values = {"ForceField", "Neon", "SmoothPlastic", "Glass"}, Value = "ForceField", Flag = "gun_material", Multi = false, Callback = function(str)
+		gun_color_picker.State(false)
+		gun_mat_dropdown = lclsec:Dropdown({Name = "Gun material", Values = {"ForceField", "Neon", "SmoothPlastic", "Glass"}, Value = "ForceField", Flag = "gun_material", Multi = false, Callback = function(str)
 			gun_material = str and Enum.Material[str] or Enum.Material.ForceField
 		end})
-
-		lclsec:Toggle({Name = "Arm changer", Value = false, Flag = "arm_changer", Callback = function(bool)
+		gun_mat_dropdown.State(false)
+		cheat.dressSkin = function(model, item_name, selected_skin)
+			local folder = game:GetService("ReplicatedStorage"):FindFirstChild("Skins")
+			if not model or not folder then return end
+			local item = folder:FindFirstChild(item_name)
+			local skin = item and item:FindFirstChild(selected_skin)
+			if not skin then return end
+			local textures = skin:FindFirstChild("Textures")
+			local materials = skin:FindFirstChild("Materials")
+			if not textures and not materials then return end
+			local parts = {}
+			for _, child in model:GetChildren() do
+				table.insert(parts, child)
+				for _, nested in child:GetChildren() do
+					table.insert(parts, nested)
+				end
+			end
+			for _, part in parts do
+				local key = part:GetAttribute("Skinnable")
+				local texture = key and textures and textures:FindFirstChild(key)
+				if texture then
+					pcall(function()
+						for _, old in part:GetChildren() do
+							if old:IsA(texture.ClassName) then old:Destroy() end
+						end
+						local copy = texture:Clone()
+						copy.Name = "SurfaceAppearance"
+						copy.Parent = part
+						local transparency = copy:GetAttribute("Transparency")
+						if transparency and part:IsA("BasePart") and part.Transparency ~= 1 then part.Transparency = transparency end
+					end)
+				end
+				local material = key and materials and materials:FindFirstChild(key)
+				if material and part:IsA("BasePart") then
+					pcall(function()
+						for _, old in part:GetChildren() do
+							if old:IsA("SurfaceAppearance") then old:Destroy() end
+						end
+						local color = material:GetAttribute("Color")
+						local transparency = material:GetAttribute("Transparency")
+						local material_name = material:GetAttribute("Name")
+						if color then part.Color = color end
+						if transparency then part.Transparency = transparency end
+						if material_name and Enum.Material[material_name] then part.Material = Enum.Material[material_name] end
+					end)
+				end
+			end
+		end
+		local arm_color_picker, arm_mat_dropdown = nil, nil
+		local arm_toggle = lclsec:Toggle({Name = "Arm changer", Value = false, Flag = "arm_changer", Callback = function(bool)
 			arm_changer = bool
+			local vis = bool and true or false
+			if arm_color_picker then arm_color_picker.State(vis) end
+			if arm_mat_dropdown then arm_mat_dropdown.State(vis) end
 		end})
-		lclsec:Colorpicker({Name = "Arm color", Value = Color3.new(1, 1, 1), Usealpha = false, Flag = "arm_color", Callback = function(color)
+		arm_color_picker = lclsec:Colorpicker({Name = "Arm color", Value = Color3.new(1, 1, 1), Usealpha = false, Flag = "arm_color", Callback = function(color)
 			arm_color = color.c
 		end})
-		lclsec:Dropdown({Name = "Arm material", Values = {"ForceField", "Neon", "SmoothPlastic", "Glass"}, Value = "ForceField", Flag = "arm_material", Multi = false, Callback = function(str)
+		arm_color_picker.State(false)
+		arm_mat_dropdown = lclsec:Dropdown({Name = "Arm material", Values = {"ForceField", "Neon", "SmoothPlastic", "Glass"}, Value = "ForceField", Flag = "arm_material", Multi = false, Callback = function(str)
 			arm_material = str and Enum.Material[str] or Enum.Material.ForceField
 		end})
+		arm_mat_dropdown.State(false)
 
-		lclsec:Toggle({Name = "Viewmodel changer", Value = false, Flag = "viewmodel_changer", Callback = function(bool)
+		local vm_x_slider, vm_y_slider, vm_z_slider = nil, nil, nil
+		local vm_toggle = lclsec:Toggle({Name = "Viewmodel changer", Value = false, Flag = "viewmodel_changer", Callback = function(bool)
 			viewmodel_changer = bool
+			local vis = bool and true or false
+			if vm_x_slider then vm_x_slider.State(vis) end
+			if vm_y_slider then vm_y_slider.State(vis) end
+			if vm_z_slider then vm_z_slider.State(vis) end
 		end})
-		lclsec:Slider({Name = "X offset", Min = -5, Max = 5, Float = 0.1, Value = 0, Flag = "viewmodel_x", Callback = function(int)
+		vm_x_slider = lclsec:Slider({Name = "X offset", Min = -5, Max = 5, Float = 0.1, Value = 0, Flag = "viewmodel_x", Callback = function(int)
 			viewmodel_x = int
 			if not viewmodel_changer then
 				return
@@ -8869,7 +11406,8 @@ do
 				vmpos(viewmodel)
 			end
 		end})
-		lclsec:Slider({Name = "Y offset", Min = -5, Max = 5, Float = 0.1, Value = 0, Flag = "viewmodel_y", Callback = function(int)
+		vm_x_slider.State(false)
+		vm_y_slider = lclsec:Slider({Name = "Y offset", Min = -5, Max = 5, Float = 0.1, Value = 0, Flag = "viewmodel_y", Callback = function(int)
 			viewmodel_y = int
 			if not viewmodel_changer then
 				return
@@ -8879,7 +11417,8 @@ do
 				vmpos(viewmodel)
 			end
 		end})
-		lclsec:Slider({Name = "Z offset", Min = -5, Max = 5, Float = 0.1, Value = 0, Flag = "viewmodel_z", Callback = function(int)
+		vm_y_slider.State(false)
+		vm_z_slider = lclsec:Slider({Name = "Z offset", Min = -5, Max = 5, Float = 0.1, Value = 0, Flag = "viewmodel_z", Callback = function(int)
 			viewmodel_z = int
 			if not viewmodel_changer then
 				return
@@ -8889,13 +11428,14 @@ do
 				vmpos(viewmodel)
 			end
 		end})
+		vm_z_slider.State(false)
 
 		Camera.ChildAdded:Connect(vmpos)
 		Camera.DescendantAdded:Connect(vmchams)
 		Camera.ChildRemoved:Connect(vmunpos)
 
-		task.spawn(function()
-			while task.wait(0.5) do
+	task.spawn(function()
+		while task.wait(0.5) do
 				local playergui = LocalPlayer.PlayerGui
 				local noinsetgui = playergui and _FindFirstChild(playergui, "NoInsetGui")
 				local mainframe = noinsetgui and _FindFirstChild(noinsetgui, "MainFrame")
@@ -8920,6 +11460,12 @@ do
 	local jumphack, jumphack_height = false, 5
 
 	local flyhack, flyhack_key, flyhack_speed, flyhack_speed_y = false, false, 100, 100
+
+	cheat.nc_state = {on = false, key = false, speed = 1, kinds = {"Floors", "Walls"}, layers = 1}
+	cheat.clipActive = false
+	local spiderman, spiderman_key = false, false
+
+	local anti_drown = false
 
 	local antiaim_yaw, antiaim_jitter, antiaim_spin = false, false, false
 	local antiaim_yaw_value, antiaim_jitter_value, antiaim_spin_value = 180, 0, 0
@@ -9009,8 +11555,8 @@ do
 
 
 
-		task.spawn(function()
-			while RunService.Heartbeat:Wait() do
+	task.spawn(function()
+		while RunService.Heartbeat:Wait() do
 				local character = LocalPlayer.Character
 				if not character then
 					continue
@@ -9054,33 +11600,45 @@ do
 			antiaim = bool
 		end})
 
-		antibox:Toggle({Name = "Pitch modifier", Value = false, Flag = "antiaim_pitch", Callback = function(bool)
+		local pitch_value_slider = nil
+		local pitch_toggle = antibox:Toggle({Name = "Pitch modifier", Value = false, Flag = "antiaim_pitch", Callback = function(bool)
 			antiaim_pitch = bool
+			if pitch_value_slider then pitch_value_slider.State(bool) end
 		end})
-		antibox:Slider({Name = "Pitch value", Min = -1, Max = 1, Float = 0.05, Value = 0, Flag = "antiaim_pitch_value", Callback = function(int)
+		pitch_value_slider = antibox:Slider({Name = "Pitch value", Min = -1, Max = 1, Float = 0.05, Value = 0, Flag = "antiaim_pitch_value", Callback = function(int)
 			antiaim_pitch_value = int
 		end})
+		pitch_value_slider.State(false)
 
-		antibox:Toggle({Name = "Yaw modifier", Value = false, Flag = "antiaim_yaw", Callback = function(bool)
+		local yaw_value_slider = nil
+		local yaw_toggle = antibox:Toggle({Name = "Yaw modifier", Value = false, Flag = "antiaim_yaw", Callback = function(bool)
 			antiaim_yaw = bool
+			if yaw_value_slider then yaw_value_slider.State(bool) end
 		end})
-		antibox:Slider({Name = "Yaw value", Min = -180, Max = 180, Float = 5, Value = 0, Flag = "antiaim_yaw_value", Callback = function(int)
+		yaw_value_slider = antibox:Slider({Name = "Yaw value", Min = -180, Max = 180, Float = 5, Value = 0, Flag = "antiaim_yaw_value", Callback = function(int)
 			antiaim_yaw_value = math.rad(int)
 		end})
+		yaw_value_slider.State(false)
 
-		antibox:Toggle({Name = "Yaw jitter", Value = false, Flag = "antiaim_jitter", Callback = function(bool)
+		local jitter_value_slider = nil
+		local jitter_toggle = antibox:Toggle({Name = "Yaw jitter", Value = false, Flag = "antiaim_jitter", Callback = function(bool)
 			antiaim_jitter = bool
+			if jitter_value_slider then jitter_value_slider.State(bool) end
 		end})
-		antibox:Slider({Name = "Jitter strength", Min = 0, Max = 90, Float = 1, Value = 45, Flag = "antiaim_jitter_value", Callback = function(int)
+		jitter_value_slider = antibox:Slider({Name = "Jitter strength", Min = 0, Max = 90, Float = 1, Value = 45, Flag = "antiaim_jitter_value", Callback = function(int)
 			antiaim_jitter_value = math.rad(int)
 		end})
+		jitter_value_slider.State(false)
 
-		antibox:Toggle({Name = "Yaw spin", Value = false, Flag = "antiaim_spin", Callback = function(bool)
+		local spin_value_slider = nil
+		local spin_toggle = antibox:Toggle({Name = "Yaw spin", Value = false, Flag = "antiaim_spin", Callback = function(bool)
 			antiaim_spin = bool
+			if spin_value_slider then spin_value_slider.State(bool) end
 		end})
-		antibox:Slider({Name = "Spin speed", Min = -10, Max = 10, Float = 0.1, Value = 0, Flag = "antiaim_spin_value", Callback = function(int)
+		spin_value_slider = antibox:Slider({Name = "Spin speed", Min = -10, Max = 10, Float = 0.1, Value = 0, Flag = "antiaim_spin_value", Callback = function(int)
 			antiaim_spin_value = math.rad(int * 36)
 		end})
+		spin_value_slider.State(false)
 		local updatetilt_remote = project_delta.updatetilt_remote
 		local jitter_side, jitter_timer, spin_timer = false, 0, 0
 		cheat.utility.new_renderstepped(LPH_NO_VIRTUALIZE(function(delta)
@@ -9122,7 +11680,7 @@ do
 		end))
 	end
 	do
-		movebox:Toggle({Name = "Speedhack", Value = false, Flag = "speedhack", Callback = function(bool)
+		local speed_toggle = movebox:Toggle({Name = "Speedhack", Value = false, Flag = "speedhack", Callback = function(bool)
 			speedhack = bool
 		end})
 		movebox:Toggle({Name = "Speedhack auto speed", Value = false, Flag = "speedhack_autospeed", Callback = function(bool)
@@ -9135,7 +11693,7 @@ do
 			speedhack_autospeed_offset = int
 		end})
 
-		movebox:Toggle({Name = "Jumphack", Value = false, Flag = "jumphack", Callback = function(bool)
+		local jump_toggle = movebox:Toggle({Name = "Jumphack", Value = false, Flag = "jumphack", Callback = function(bool)
 			jumphack = bool
 		end})
 		movebox:Slider({Name = "Jumphack height", Min = 1, Max = 10, Float = 0.1, Value = 5, Flag = "jumphack_height", Callback = function(int)
@@ -9144,7 +11702,7 @@ do
 
 		local fh_keybind; fh_keybind = movebox:Toggle({Name = "Flyhack", Value = false, Flag = "flyhack", Callback = function(bool)
 			flyhack = bool
-		end}):Keybind({Name = "Flyhack", Mode = "Toggle", Key = Enum.KeyCode.X, Value = false, Flag = "flyhack_key", Callback = function(bool)
+		end}):Keybind({Name = "Flyhack", Mode = "Toggle", Key = Enum.KeyCode.X, Value = false, Flag = "flyhack_key", Link = "flyhack", Callback = function(bool)
 			flyhack_key = flyhack and bool
 			fh_keybind.Set(flyhack_key, true)
 		end})
@@ -9154,7 +11712,64 @@ do
 		movebox:Slider({Name = "Flyhack speed Y", Min = 0, Max = 50, Float = 1, Value = 25, Flag = "flyhack_speed_y", Callback = function(int)
 			flyhack_speed_y = int
 		end})
-	end
+
+		local nc_kinds_dropdown, nc_layers_slider, nc_speed_slider = nil, nil, nil
+		local nc_toggle = movebox:Toggle({Name = "Noclip", Value = false, Flag = "noclip", Callback = function(bool)
+			cheat.nc_state.on = bool
+			local vis = bool and true or false
+			if nc_kinds_dropdown then nc_kinds_dropdown.State(vis) end
+			if nc_layers_slider then nc_layers_slider.State(vis) end
+			if nc_speed_slider then nc_speed_slider.State(vis) end
+		end})
+		local nc_keybind; nc_keybind = nc_toggle:Keybind({Name = "Noclip", Mode = "Toggle", Modes = {"Hold", "Toggle"}, Key = Enum.KeyCode.C, Value = false, Flag = "noclip_key", Link = "noclip", Callback = function(bool)
+			cheat.nc_state.key = cheat.nc_state.on and bool
+			nc_keybind.Set(cheat.nc_state.key, true)
+		end})
+		nc_kinds_dropdown = movebox:Dropdown({Name = "Clip through", Values = {"Floors", "Walls"}, Value = {"Floors", "Walls"}, Flag = "noclip_kinds", Multi = true, Callback = function(tbl)
+			cheat.nc_state.kinds = (tbl and #tbl > 0) and tbl or {"Floors", "Walls"}
+		end})
+		nc_kinds_dropdown.State(false)
+		nc_layers_slider = movebox:Slider({Name = "Max layers", Min = 1, Max = 4, Float = 1, Value = 1, Flag = "noclip_layers", Callback = function(int)
+			cheat.nc_state.layers = math.max(1, math.floor(int))
+		end})
+		nc_layers_slider.State(false)
+		nc_speed_slider = movebox:Slider({Name = "Clip speed", Min = 0.5, Max = 8, Float = 0.5, Value = 1, Flag = "noclip_speed", Callback = function(int)
+			cheat.nc_state.speed = int
+		end})
+		nc_speed_slider.State(false)
+
+		local sp_keybind; sp_keybind = movebox:Toggle({Name = "Spiderman", Value = false, Flag = "spiderman", Callback = function(bool)
+			spiderman = bool
+		end}):Keybind({Name = "Spiderman", Mode = "Hold", Key = Enum.KeyCode.F, Value = false, Flag = "spiderman_key", Link = "spiderman", Callback = function(bool)
+			spiderman_key = spiderman and bool
+			sp_keybind.Set(spiderman_key, true)
+		end})
+
+		movebox:Toggle({Name = "Anti drown", Value = false, Flag = "anti_drown", Callback = function(bool)
+			anti_drown = bool
+			cheat.anti_drown = bool
+		end})
+		local swim_override, ignore_water = false, false
+		cheat.ignore_water = false
+		local swim_platform
+		local swim_mode_dropdown = nil
+		local swim_toggle = movebox:Toggle({Name = "Swim override", Value = false, Flag = "swim_override", Callback = function(bool)
+			swim_override = bool
+			if swim_mode_dropdown then swim_mode_dropdown.State(bool) end
+			if not bool and swim_platform then
+				pcall(function() swim_platform:Destroy() end)
+				swim_platform = nil
+			end
+		end})
+		swim_mode_dropdown = movebox:Dropdown({Name = "Swim mode", Values = {"Jesus", "Moses"}, Value = "Jesus", Flag = "swim_mode", Multi = false, Callback = function() end})
+		swim_mode_dropdown.State(false)
+		movebox:Toggle({Name = "Ignore water", Value = false, Flag = "ignore_water", Callback = function(bool)
+			ignore_water = bool
+			cheat.ignore_water = bool
+		end})
+		movebox:Toggle({Name = "Omni sprint", Value = false, Flag = "omni_sprint", Callback = function(bool)
+			omni_sprint = bool
+		end})
 
 	cheat.utility.new_renderstepped(LPH_NO_VIRTUALIZE(function(delta)
 		local char = LocalPlayer.Character
@@ -9164,11 +11779,34 @@ do
 		if not (hrp and hum) then return end
 
 		local calcspeed = speedhack_autospeed and project_delta.calculate_speed(hrp) + speedhack_autospeed_offset or speedhack_speed
+		if omni_sprint and hum.MoveDirection.Magnitude > 0 then
+			local gui = LocalPlayer.PlayerGui
+			if gui and gui:FindFirstChild("MainGui") then
+				hum.WalkSpeed = 18
+			end
+		end
 		if speedhack then
 			hum.WalkSpeed = calcspeed
 		end
 		if jumphack then
 			hum.JumpHeight = jumphack_height
+		end
+		if swim_override and Library.Flags["swim_mode"] == "Jesus" then
+			local water = workspace:Raycast(hrp.Position, _Vector3new(0, -16, 0), RaycastParams.new())
+			if water and water.Material == Enum.Material.Water then
+				if not swim_platform then
+					swim_platform = Instance.new("Part")
+					swim_platform.Anchored = true
+					swim_platform.CanCollide = true
+					swim_platform.Transparency = 1
+					swim_platform.Parent = workspace
+				end
+				swim_platform.Size = _Vector3new(16, 0.4, 16)
+				swim_platform.Position = _Vector3new(hrp.Position.X, water.Position.Y, hrp.Position.Z)
+			end
+		elseif swim_platform then
+			pcall(function() swim_platform:Destroy() end)
+			swim_platform = nil
 		end
 
 		local cameralook = (_Vector3new(1, 0, 1) * Camera.CFrame.LookVector).Unit
@@ -9190,7 +11828,455 @@ do
 			local hmm = direction * calcspeed
 			hrp.AssemblyLinearVelocity = _Vector3new(hmm.X, hrp.AssemblyLinearVelocity.Y, hmm.Z)
 		end
+		if spiderman and spiderman_key then
+			local params = RaycastParams.new()
+			params.FilterType = Enum.RaycastFilterType.Exclude
+			params.FilterDescendantsInstances = {char, workspace.NoCollision}
+			params.IgnoreWater = true
+			local hit = workspace:Raycast(hrp.Position, hrp.CFrame.LookVector * 2, params)
+			if hit and hit.Instance then
+				local flat = _Vector3new(hrp.CFrame.LookVector.X, 0, hrp.CFrame.LookVector.Z)
+				if flat.Magnitude > 0.01 then
+					hrp.AssemblyLinearVelocity = _Vector3new(flat.Unit.X * hrp.AssemblyLinearVelocity.X, 30, flat.Unit.Z * hrp.AssemblyLinearVelocity.Z)
+				else
+					hrp.AssemblyLinearVelocity = _Vector3new(0, 30, 0)
+				end
+				if hum:GetState() ~= Enum.HumanoidStateType.Climbing then
+					hum:ChangeState(Enum.HumanoidStateType.Climbing)
+				end
+			end
+		end
 	end))
+	cheat.utility.new_heartbeat(function()
+		if not anti_drown then return end
+		local folder = game:GetService("ReplicatedStorage"):FindFirstChild("Players")
+		local data = folder and folder:FindFirstChild(LocalPlayer.Name)
+		local status = data and data:FindFirstChild("Status")
+		local vars = status and status:FindFirstChild("GameplayVariables")
+		if vars and vars:GetAttribute("Drowning") ~= false then
+			pcall(function()
+				vars:SetAttribute("Drowning", false)
+			end)
+		end
+	end)
+end
+end
+
+do
+	local NC_PROBE_WAIT = 0.05
+	local NC_SINK = 0.35
+	local NC_RISE = 0.25
+	local NC_REACH = 3
+	local NC_MAXDROP = 6
+	local NC_DROP_SEARCH = 10
+	local NC_DWELL = 0.25
+	local NC_HELD_DIST = 4
+	local NC_HELD_TIME = 4
+	local NC_WALL_ROT = CFrame.Angles(math.pi / 2, 0, 0)
+	local NC_OK = Color3.fromRGB(130, 255, 170)
+	local NC_BAD = Color3.fromRGB(255, 93, 120)
+	local NC_MID = Color3.fromRGB(255, 210, 120)
+	local NC_IDLE = Color3.fromRGB(210, 210, 210)
+	local function nc_rig()
+		local c = LocalPlayer.Character
+		local h = c and _FindFirstChild(c, "HumanoidRootPart")
+		local hm = c and _FindFirstChildOfClass(c, "Humanoid")
+		return c, h, hm
+	end
+	local function nc_uac_pos()
+		local folder = game:GetService("ReplicatedStorage"):FindFirstChild("Players")
+		local data = folder and folder:FindFirstChild(LocalPlayer.Name)
+		local status = data and data:FindFirstChild("Status")
+		local uac = status and status:FindFirstChild("UAC")
+		local pos = uac and uac:GetAttribute("LastVerifiedPos")
+		if typeof(pos) == "Vector3" then return pos end
+		return nil
+	end
+	local nc_ray = RaycastParams.new()
+	nc_ray.FilterType = Enum.RaycastFilterType.Exclude
+	nc_ray.IgnoreWater = true
+	pcall(function() nc_ray.RespectCanCollide = true end)
+	local nc_over = OverlapParams.new()
+	nc_over.FilterType = Enum.RaycastFilterType.Exclude
+	pcall(function() nc_over.RespectCanCollide = true end)
+	pcall(function() nc_over.MaxParts = 8 end)
+	local function nc_filter(char)
+		nc_ray.FilterDescendantsInstances = {char, workspace:FindFirstChild("NoCollision"), workspace:FindFirstChild("DroppedItems")}
+	end
+	cheat.groundBelow = function(pos, char)
+		if char then nc_filter(char) end
+		return workspace:Raycast(pos + _Vector3new(0, 2, 0), _Vector3new(0, -4096, 0), nc_ray)
+	end
+	local nc_probe_part = Instance.new("Part")
+	nc_probe_part.Name = "NoclipProbe"
+	nc_probe_part.Anchored = true
+	nc_probe_part.CanCollide = false
+	nc_probe_part.CanTouch = false
+	nc_probe_part.CanQuery = false
+	nc_probe_part.CastShadow = false
+	nc_probe_part.Transparency = 1
+	nc_probe_part.Size = _Vector3new(1, 1, 1)
+	nc_probe_part.Parent = workspace.Terrain
+	local function nc_box_free(cf, size, char)
+		nc_over.FilterDescendantsInstances = {char, workspace:FindFirstChild("NoCollision"), workspace:FindFirstChild("DroppedItems"), workspace.Terrain}
+		if nc_probe_part.Parent ~= workspace.Terrain then nc_probe_part.Parent = workspace.Terrain end
+		nc_probe_part.Size = size
+		nc_probe_part.CFrame = cf
+		for _, p in workspace:GetPartsInPart(nc_probe_part, nc_over) do
+			local s = p.Size
+			if math.max(s.X, s.Y, s.Z) >= 1 then return p end
+		end
+	end
+	local function nc_fit(char, cf, feet, top)
+		return nc_box_free(cf * _CFramenew(0, (top - feet) / 2, 0), _Vector3new(1.2, math.max(1, feet + top - 0.7), 1), char)
+	end
+	local nc_old_gui = game:GetService("CoreGui"):FindFirstChild("SwimNoclip")
+	if nc_old_gui then nc_old_gui:Destroy() end
+	local nc_gui = Instance.new("ScreenGui")
+	nc_gui.Name = "SwimNoclip"
+	nc_gui.ResetOnSpawn = false
+	nc_gui.IgnoreGuiInset = true
+	nc_gui.DisplayOrder = 10
+	nc_gui.Parent = game:GetService("CoreGui")
+	local nc_label = Instance.new("TextLabel")
+	nc_label.AnchorPoint = _Vector2new(0.5, 0)
+	nc_label.Position = UDim2.new(0.5, 0, 0.5, 24)
+	nc_label.Size = UDim2.fromOffset(300, 14)
+	nc_label.BackgroundTransparency = 1
+	nc_label.Font = Enum.Font.Gotham
+	nc_label.TextSize = 12
+	nc_label.TextStrokeTransparency = 0.35
+	nc_label.TextColor3 = NC_IDLE
+	nc_label.Text = ""
+	nc_label.Visible = false
+	nc_label.Parent = nc_gui
+	local function nc_status(text, color)
+		if nc_label.Text ~= text then nc_label.Text = text end
+		if nc_label.TextColor3 ~= color then nc_label.TextColor3 = color end
+	end
+	local nc_clip, nc_plan, nc_plan_err, nc_last_probe, nc_last_part, nc_part_time, nc_cooling, nc_cool_until = nil, nil, nil, 0, nil, 0, false, 0
+	local function nc_kind_allowed(kind)
+		if type(cheat.nc_state.kinds) ~= "table" then return true end
+		return table.find(cheat.nc_state.kinds, kind) ~= nil
+	end
+	local function nc_dims(char, hrp, hum)
+		local feet = hum.HipHeight > 0 and hum.HipHeight + hrp.Size.Y / 2 or 3
+		local neck = 1
+		local top = 6
+		local head = char and _FindFirstChild(char, "Head")
+		if head and head:IsA("BasePart") then
+			local y = hrp.CFrame:PointToObjectSpace(head.Position).Y
+			neck = y - head.Size.Y / 2
+			top = y + head.Size.Y / 2
+		end
+		local min_neck = math.max(0.2, neck)
+		return feet, min_neck, math.max(min_neck + 0.5, top)
+	end
+	local function nc_scan_layer(origin, dir, from_d, to_d)
+		local lo = from_d
+		for _ = 1, 8 do
+			local hit = workspace:Raycast(origin + dir * (lo + 0.02), dir * math.max(0.05, to_d - lo - 0.02), nc_ray)
+			local edge = hit and (hit.Position - origin):Dot(dir) - 0.02 or to_d
+			if lo + 0.005 < edge then
+				local back = workspace:Raycast(origin + dir * edge, -dir * (edge - from_d + 0.01), nc_ray)
+				if back then
+					local t = (back.Position - origin):Dot(dir)
+					if from_d + 0.01 < t then return t end
+				end
+			end
+			if not hit then return nil end
+			lo = (hit.Position - origin):Dot(dir)
+			if to_d <= lo then return nil end
+		end
+	end
+	local function nc_scan_stack(origin, dir, first_len, need_room, max_dist, max_layers)
+		local d = 0
+		local layers = 0
+		while true do
+			local thick = nc_scan_layer(origin, dir, d, first_len)
+			if not thick then
+				return nil, layers == 0 and "too thick" or "a layer below is too thick"
+			end
+			layers += 1
+			local fwd = workspace:Raycast(origin + dir * (thick + 0.02), dir * max_dist, nc_ray)
+			local room = fwd and (fwd.Position - origin):Dot(dir) - thick or nil
+			if not room or room >= need_room then
+				return thick, room, layers
+			end
+			if max_layers <= layers then break end
+			d = thick + room
+		end
+		return nil, ("%d+ floors thick, raise Max Floors"):format(layers + 1)
+	end
+	local function nc_cf_at(plan, d)
+		return _CFramenew(plan.surf + plan.n * d) * plan.rot
+	end
+	local function nc_snap_ground(char, hrp, feet)
+		if not (hrp and hrp.Parent) then return end
+		if char then nc_filter(char) end
+		local p = hrp.Position
+		local hit = workspace:Raycast(p + _Vector3new(0, 1, 0), _Vector3new(0, -256, 0), nc_ray)
+		if not hit then return end
+		local drop = p.Y - hit.Position.Y + feet
+		if drop > 0.05 then hrp.CFrame = hrp.CFrame - _Vector3new(0, drop, 0) end
+	end
+	local function nc_finish(mode, msg)
+		local c = nc_clip
+		if not c then return end
+		nc_clip = nil
+		cheat.clipActive = false
+		local char, hrp = nc_rig()
+		if hrp and hrp.Parent then
+			pcall(function()
+				if mode == "back" then
+					hrp.CFrame = c.start
+				elseif mode == "finish" then
+					hrp.CFrame = c.kind == "floor" and nc_cf_at(c, c.uEnd) or c.final
+				end
+				local done = mode ~= "back" and (mode == "finish" or (c.phase or 0) >= 2)
+				if done then
+					nc_snap_ground(char, hrp, c.feet or 3)
+					local cf = hrp.CFrame
+					local lv = cf.LookVector
+					local flat = _Vector3new(lv.X, 0, lv.Z)
+					if flat.Magnitude < 0.001 then flat = cf.RightVector end
+					hrp.CFrame = CFrame.lookAt(cf.Position, cf.Position + flat.Unit)
+				end
+				hrp.AssemblyLinearVelocity = Vector3.zero
+				hrp.AssemblyAngularVelocity = Vector3.zero
+			end)
+		end
+		for _, p in c.parts do
+			if p.Parent then pcall(function() p.CanCollide = true end) end
+		end
+		if c.hum and c.hum.Parent then
+			pcall(function() c.hum.PlatformStand = c.stood == true end)
+		end
+		nc_cooling = true
+		nc_cool_until = os.clock() + 0.75
+		nc_plan = nil
+		if msg then Library.Notification("Noclip: " .. msg, 3) end
+	end
+	local function nc_start(plan, char, hrp, hum)
+		plan.start = hrp.CFrame
+		plan.hum = hum
+		plan.stood = hum.PlatformStand
+		if plan.kind == "floor" then
+			plan.u = plan.surf.Y - hrp.Position.Y
+			plan.phase = 1
+		else
+			plan.u = math.max((hrp.Position - plan.surf):Dot(plan.n), -plan.feet)
+			plan.phase = 0
+		end
+		plan.uStart = plan.u
+		plan.phaseAt = os.clock()
+		plan.waited = 0
+		local base = nc_uac_pos()
+		plan.uacBase = base and base - hrp.Position or nil
+		plan.parts = {}
+		for _, p in char:GetDescendants() do
+			if p:IsA("BasePart") and p.CanCollide then
+				plan.parts[#plan.parts + 1] = p
+				p.CanCollide = false
+			end
+		end
+		hum.PlatformStand = true
+		nc_clip = plan
+		cheat.clipActive = true
+	end
+	local function nc_step(dt, hrp)
+		local c = nc_clip
+		local now = os.clock()
+		local target
+		if c.phase == 0 then
+			local k = math.min(1, (now - c.phaseAt) / NC_SINK)
+			target = c.start:Lerp(nc_cf_at(c, c.u), 1 - (1 - k) ^ 4)
+			if k >= 1 then c.phase = 1 c.phaseAt = now end
+		elseif c.phase == 3 then
+			local k = math.min(1, (now - c.phaseAt) / NC_RISE)
+			target = nc_cf_at(c, c.uEnd):Lerp(c.final, 1 - (1 - k) ^ 4)
+			if k >= 1 then
+				hrp.CFrame = c.final
+				return nc_finish(nil)
+			end
+		else
+			local uac = c.uacBase and nc_uac_pos()
+			c.held = uac and (uac - hrp.Position - c.uacBase).Magnitude > NC_HELD_DIST or false
+			if c.held then
+				c.waited = c.waited + dt
+				if NC_HELD_TIME < c.waited then
+					return nc_finish("back", "the server never caught up, put you back")
+				end
+			else
+				c.waited = 0
+				c.u = c.u + math.max(0.5, cheat.nc_state.speed) * math.min(dt, 0.1)
+				if c.phase == 1 and c.u >= c.neck then c.phase = 2 c.phaseAt = now end
+				if c.phase == 2 and c.u >= c.uEnd then
+					c.u = c.uEnd
+					if c.kind == "floor" then
+						hrp.CFrame = nc_cf_at(c, c.uEnd)
+						return nc_finish(nil)
+					end
+					c.phase = 3
+					c.phaseAt = now
+				end
+			end
+			target = nc_cf_at(c, c.u)
+		end
+		hrp.CFrame = target
+		hrp.AssemblyLinearVelocity = Vector3.zero
+		hrp.AssemblyAngularVelocity = Vector3.zero
+	end
+	local function nc_probe(char, hrp, hum)
+		if hum.Sit then return nil, "seated" end
+		local cam_cf = Camera.CFrame
+		local pos = hrp.Position
+		nc_filter(char)
+		local feet, neck, top = nc_dims(char, hrp, hum)
+		local down = workspace:Raycast(pos, _Vector3new(0, -(feet + 3), 0), nc_ray)
+		if hum.FloorMaterial == Enum.Material.Air and not down then
+			return nil, "not on the ground"
+		end
+		local cam_hit = workspace:Raycast(cam_cf.Position, cam_cf.LookVector * math.min(80, (cam_cf.Position - pos).Magnitude + NC_REACH + 6), nc_ray)
+		if not cam_hit then return nil end
+		local look = hrp.CFrame.LookVector
+		local flat = _Vector3new(look.X, 0, look.Z)
+		local yaw = CFrame.lookAt(Vector3.zero, flat.Magnitude > 0.001 and flat.Unit or _Vector3new(0, 0, -1))
+		local plan = {part = cam_hit.Instance, feet = feet, neck = neck, top = top}
+		local layers = math.max(1, math.floor(cheat.nc_state.layers or 1))
+		local dist2d = _Vector3new(cam_hit.Position.X - pos.X, 0, cam_hit.Position.Z - pos.Z).Magnitude
+		if cam_hit.Normal.Y > 0.5 then
+			if dist2d > NC_REACH + 3 or math.abs(cam_hit.Position.Y - pos.Y - feet) > 3 then return nil end
+			if not nc_kind_allowed("Floors") then return nil, "floors are off" end
+			if not (down and down.Normal.Y > 0.5) then return nil, "not standing on it" end
+			plan.kind = "floor"
+			plan.n = _Vector3new(0, -1, 0)
+			plan.rot = yaw
+			plan.surf = _Vector3new(pos.X, down.Position.Y, pos.Z)
+			plan.part = down.Instance
+			local need = feet + top + 0.3
+			local thick, room, n = nc_scan_stack(plan.surf, plan.n, NC_MAXDROP + 0.5, need, NC_DROP_SEARCH + need + 1, layers)
+			if not thick then return nil, room end
+			if not room then return nil, "drop is past Max Drop" end
+			plan.t = thick
+			plan.layers = n
+			local floor_y = plan.surf.Y - thick - top - 0.3
+			plan.uEnd = plan.surf.Y - floor_y
+			plan.final = _CFramenew(_Vector3new(pos.X, floor_y, pos.Z)) * yaw
+			local blocked = nc_fit(char, plan.final, feet, top)
+			if blocked then return nil, "blocked by " .. blocked.Name end
+			return plan
+		end
+		if math.abs(cam_hit.Normal.Y) < 0.6 then
+			if dist2d > NC_REACH + 3 or cam_hit.Position.Y < pos.Y - feet - 1 or cam_hit.Position.Y > pos.Y + top + 3 then return nil end
+			if not nc_kind_allowed("Walls") then return nil, "walls are off" end
+			local nrm = _Vector3new(-cam_hit.Normal.X, 0, -cam_hit.Normal.Z)
+			if nrm.Magnitude < 0.001 then return nil, "too steep" end
+			local dir = nrm.Unit
+			local side = nil
+			for _, h in {0, -feet * 0.6, neck} do
+				local r = workspace:Raycast(pos + _Vector3new(0, h, 0), dir * (NC_REACH + 1.5), nc_ray)
+				if r and math.abs(r.Normal.Y) < 0.6 then side = r break end
+			end
+			if not side then return nil, "too far to reach" end
+			local out = _Vector3new(-side.Normal.X, 0, -side.Normal.Z).Unit
+			plan.kind = "wall"
+			plan.n = out
+			plan.rot = CFrame.lookAt(Vector3.zero, out) * NC_WALL_ROT
+			plan.surf = pos + out * (side.Position - pos):Dot(out)
+			plan.part = side.Instance
+			local thick, room, n = nc_scan_stack(plan.surf, out, NC_MAXDROP + 0.5, 1.6, top + 3.5, layers)
+			if not thick then return nil, room end
+			plan.t = thick
+			plan.layers = n
+			plan.uEnd = thick + top + 0.3
+			local blocked_name = nil
+			local nofloor = false
+			for _, lift in {0, 0.75, 1.5, 2.5} do
+				local d = thick + 0.9 + lift
+				if room and d - thick + 0.6 > room then break end
+				local beyond = plan.surf + out * d
+				local floor_hit = workspace:Raycast(beyond + _Vector3new(0, 2.5, 0), _Vector3new(0, -(feet + 7), 0), nc_ray)
+				local fy = floor_hit and floor_hit.Position.Y + feet
+				if fy and fy <= pos.Y + 2.5 and fy >= pos.Y - 4 then
+					local fpos = _Vector3new(beyond.X, fy, beyond.Z)
+					local fcf = CFrame.lookAt(fpos, fpos + out)
+					local b = nc_fit(char, fcf, feet, top)
+					if not b then plan.final = fcf return plan end
+					blocked_name = b
+				else
+					nofloor = true
+				end
+			end
+			if blocked_name then return nil, "blocked by " .. blocked_name.Name end
+			return nil, nofloor and "no floor behind it" or "no room behind it"
+		end
+		return nil, "too steep"
+	end
+	RunService.Stepped:Connect(function()
+		local c = nc_clip
+		if not c then return end
+		for _, p in c.parts do
+			if p.CanCollide then p.CanCollide = false end
+		end
+	end)
+	RunService.Heartbeat:Connect(function(dt)
+		local active = cheat.nc_state.on and cheat.nc_state.key
+		local char, hrp, hum = nc_rig()
+		local alive = hrp ~= nil and hum ~= nil and hum.Health > 0
+		nc_label.Visible = active and alive
+		if nc_clip then
+			if not (alive and nc_clip.hum == hum) then
+				nc_finish(nil)
+			elseif not active then
+				nc_finish((nc_clip.phase or 0) >= 2 and "finish" or "back")
+			else
+				local ok = pcall(nc_step, dt, hrp)
+				if not ok then nc_finish("back", "stopped on an error, put you back") end
+			end
+			local c = nc_clip
+			if c then
+				local h = math.max(0.001, c.uEnd - c.uStart)
+				local pct = math.floor(math.clamp((c.u - c.uStart) / h, 0, 1) * 100)
+				nc_status(c.held and ("CLIPPING %d%%  waiting on server"):format(pct) or ("CLIPPING %d%%"):format(pct), NC_MID)
+			end
+			return
+		end
+		if not (active and alive) then nc_plan = nil return end
+		local now = os.clock()
+		if now - nc_last_probe >= NC_PROBE_WAIT then
+			nc_last_probe = now
+			local ok, plan, err = pcall(nc_probe, char, hrp, hum)
+			nc_plan, nc_plan_err = ok and plan or nil, ok and err or "probe failed"
+		end
+		if nc_cooling then
+			if nc_plan then
+				nc_status("LOOK AWAY TO CLIP AGAIN", NC_IDLE)
+				return
+			end
+			nc_cooling = false
+		end
+		if not nc_plan then
+			nc_status(nc_plan_err and "NOT CLIPPABLE  " .. nc_plan_err or "NOT CLIPPABLE", nc_plan_err and NC_BAD or NC_IDLE)
+			return
+		end
+		nc_status(("CLIPPABLE  %s %.1fst%s"):format(nc_plan.kind, nc_plan.t, (nc_plan.layers or 1) > 1 and (("  %d floors"):format(nc_plan.layers)) or ""), NC_OK)
+		if nc_plan.part ~= nc_last_part then nc_last_part, nc_part_time = nc_plan.part, now end
+		if now - nc_part_time >= NC_DWELL and now >= nc_cool_until then
+			local q = nc_plan
+			nc_plan = nil
+			if not pcall(nc_start, q, char, hrp, hum) then
+				nc_clip = q.parts and q or nil
+				nc_finish("back", "could not start")
+			end
+		end
+	end)
+	LocalPlayer.CharacterAdded:Connect(function()
+		nc_clip = nil
+		nc_plan = nil
+		nc_last_part = nil
+		cheat.clipActive = false
+	end)
 end
 
 local character, hrp, head
@@ -9280,28 +12366,6 @@ do
 			forced_cframe = nil
 		end
 
-		local des_keybind; des_keybind = expsec:Toggle({Name = "Freeze desync", Value = false, Flag = "desync_freeze", Callback = function(bool)
-			desync_freeze = bool
-			if not desync_freeze then
-				toggle_desync(false)
-			end
-		end}):Keybind({Name = "Freeze desync", Mode = "Toggle", Key = Enum.KeyCode.M, Value = false, Flag = "desync_freeze_key", Callback = function(bool)
-			if not desync_ready then
-				des_keybind.Set(false, true)
-				return Library.Notification("Freeze is not ready yet!", 2.5)
-			end
-
-			desync_freeze_key = desync_freeze and bool
-			des_keybind.Set(desync_freeze_key, true)
-			if desync_freeze_key then
-				task.spawn(toggle_desync, desync_freeze_key)
-			end
-		end})
-
-		expsec:Slider({Name = "Freeze factor", Min = 0, Max = 500, Float = 10, Value = 100, Flag = "desync_freeze_factor", Callback = function(int)
-			desync_freeze_factor = int
-		end})
-
 		local old = 0
 		local isSleeping = false
 		RunService.Heartbeat:Connect(function()
@@ -9358,9 +12422,11 @@ do
 	end})
 
 	local shitcode, shitcode_tick, shitcode_factor = false, tick(), 60
-	expsec:Toggle({Name = "FPS limiter", Flag = "old_swimhub_mode", Value = false, Callback = function(v)
+	local fps_limit_slider = nil
+	local fps_toggle = expsec:Toggle({Name = "FPS limiter", Flag = "old_swimhub_mode", Value = false, Callback = function(v)
 		shitcode = v
 		shitcode_tick = tick()
+		if fps_limit_slider then fps_limit_slider.State(v) end
 		task.spawn(function()
 			while shitcode do
 				if tick() - shitcode_tick > 1/shitcode_factor then
@@ -9370,67 +12436,204 @@ do
 			end
 		end)
 	end})
-	expsec:Slider({Name = "FPS Limit", Min = 2, Max = 60, Float = 0.1, Value = 0, Flag = "shitcode_factor", Callback = function(int)
+	fps_limit_slider = expsec:Slider({Name = "FPS limit", Min = 2, Max = 60, Float = 0.1, Value = 0, Flag = "shitcode_factor", Callback = function(int)
 		shitcode_factor = int
 	end})
-
-
-	local ds_keybind; ds_keybind = dscsec:Toggle({Name = "Enabled", Value = false, Flag = "desync_enabled", Callback = function(bool)
-		desync_enabled = bool
-	end}):Keybind({Name = "Desync", Mode = "Toggle", Key = Enum.KeyCode.B, Value = false, Flag = "desync_enabled_key", Callback = function(bool)
-		desync_enabled_key = desync_enabled and bool
-		ds_keybind.Set(desync_enabled_key, true)
+	fps_limit_slider.State(false)
+	local bring_keybind; bring_keybind = expsec:Toggle({Name = "Bring vehicle", Value = false, Flag = "bring_vehicle", Callback = function(bool)
+		cheat.feat.bring_vehicle = bool
+	end}):Keybind({Name = "Bring vehicle", Mode = "Toggle", Key = Enum.KeyCode.V, Value = false, Flag = "bring_vehicle_key", Link = "bring_vehicle", Callback = function(bool)
+		if bool and cheat.feat.bring_vehicle then
+			task.spawn(function()
+				local char = LocalPlayer.Character
+				local hum = char and _FindFirstChildOfClass(char, "Humanoid")
+				local hrp = char and _FindFirstChild(char, "HumanoidRootPart")
+				if not (hum and hrp) then
+					Library.Notification("Vehicle: be spawned in", 3)
+					return
+				end
+				local folder = workspace:FindFirstChild("Vehicles")
+				if not folder then
+					Library.Notification("Vehicle: no Vehicles folder", 3)
+					return
+				end
+				local best_seat, best_vehicle, best_d = nil, nil, math.huge
+				for _, v in folder:GetChildren() do
+					local seat = v:FindFirstChildWhichIsA("VehicleSeat", true) or v:FindFirstChildWhichIsA("Seat", true)
+					if seat then
+						local d = (seat.Position - hrp.Position).Magnitude
+						if d < best_d then
+							best_d = d
+							best_seat = seat
+							best_vehicle = v
+						end
+					end
+				end
+				if not best_seat then
+					Library.Notification("Vehicle: none in loading radius", 3)
+					return
+				end
+				Library.Notification("Vehicle: bringing " .. best_vehicle.Name, 3)
+				pcall(function()
+					hrp.CFrame = best_seat.CFrame + Vector3.new(0, 3, 0)
+					task.wait(0.1)
+					best_seat:Sit(hum)
+				end)
+			end)
+			bring_keybind.Set(false, true)
+		end
+	end})
+	local hover_keybind; hover_keybind = expsec:Toggle({Name = "Hover loot", Value = false, Flag = "hover_loot", Callback = function(bool)
+		cheat.hover_loot_on = bool
+		cheat.feat.hover_loot = bool
+	end}):Keybind({Name = "Hover loot", Mode = "Hold", Key = Enum.KeyCode.M, Value = false, Flag = "hover_loot_key", Link = "hover_loot", Callback = function(bool)
+		cheat.hover_loot_key = cheat.hover_loot_on and bool
+		cheat.feat.hover_loot = cheat.hover_loot_on and bool
+		hover_keybind.Set(cheat.hover_loot_key, true)
+	end})
+	do
+		cheat.hover_loot_on, cheat.hover_loot_key = false, false
+		local quickmove = game:GetService("ReplicatedStorage"):FindFirstChild("Remotes")
+		quickmove = quickmove and quickmove:FindFirstChild("QuickMove")
+		local hover_last, hover_tick = nil, 0
+		task.spawn(function()
+			while task.wait() do
+				if cheat.hover_loot_on and cheat.hover_loot_key and quickmove then
+					local now = tick()
+					if now - hover_tick >= 0.05 then
+						hover_tick = now
+						local mouse = LocalPlayer:GetMouse()
+						local pg = LocalPlayer:FindFirstChild("PlayerGui")
+						local frame = nil
+						if pg then
+							for _, obj in pg:GetGuiObjectsAtPosition(mouse.X, mouse.Y) do
+								if obj:IsA("Frame") then
+									local item = obj:FindFirstChild("Item")
+									if item and item.Value then
+										frame = obj
+										break
+									end
+								end
+							end
+						end
+						local item = frame and frame:FindFirstChild("Item")
+						local ref = item and item.Value
+						if frame and ref and ref.Parent and ref ~= hover_last then
+							local data = project_delta.local_game_data
+							local status = data and data:FindFirstChild("Status")
+							local vars = status and status:FindFirstChild("GameplayVariables")
+							local cont = vars and vars:FindFirstChild("CurrentContainer")
+							if cont and cont.Value ~= nil then
+								pcall(function()
+									quickmove:FireServer(frame.Name, ref.Parent)
+								end)
+								hover_last = ref
+							end
+						elseif not frame then
+							hover_last = nil
+						end
+					end
+				else
+					hover_last = nil
+				end
+			end
+		end)
+	end
+	expsec:Toggle({Name = "Flashlight override", Value = false, Flag = "flashlight_override", Callback = function(bool)
+		cheat.feat.flashlight_override = bool
+	end})
+	expsec:Toggle({Name = "Laser override", Value = false, Flag = "laser_override", Callback = function(bool)
+		cheat.feat.laser_override = bool
 	end})
 
-	dscsec:Toggle({Name = "Visualize desync", Value = false, Flag = "desync_visualize", Callback = function(bool)
-		desync_visualize = bool
-	end}):Colorpicker({Name = "Visualization color", Value = Color3.new(1, 1, 1), Usealpha = true, Flag = "desync_visualize_color", Callback = function(color)
-		main_wireframe.Color3 = color.c
-		main_wireframe.Transparency = color.a
-	end})
 
-	dscsec:Slider({Name = "X offset", Min = -10, Max = 10, Float = 0.1, Value = 0, Flag = "desync_x_offset", Callback = function(int)
-		desync_x_offset = int
-	end})
-	dscsec:Slider({Name = "Y offset", Min = -10, Max = 10, Float = 0.1, Value = 0, Flag = "desync_y_offset", Callback = function(int)
-		desync_y_offset = int
-	end})
-	dscsec:Slider({Name = "Z offset", Min = -10, Max = 10, Float = 0.1, Value = 0, Flag = "desync_z_offset", Callback = function(int)
-		desync_z_offset = int
-	end})
+		local ds_x_slider, ds_y_slider, ds_z_slider, ds_rx_slider, ds_ry_slider, ds_rz_slider = nil, nil, nil, nil, nil, nil
+		local ds_randr_toggle, ds_randp_toggle, ds_range_slider, ds_vel_toggle, ds_vx_slider, ds_vy_slider, ds_vz_slider, ds_vis_toggle = nil, nil, nil, nil, nil, nil, nil, nil
+		local ds_keybind; ds_keybind = dscsec:Toggle({Name = "Enabled", Value = false, Flag = "desync_enabled", Callback = function(bool)
+			desync_enabled = bool
+			local vis = bool and true or false
+			if ds_x_slider then ds_x_slider.State(vis) end
+			if ds_y_slider then ds_y_slider.State(vis) end
+			if ds_z_slider then ds_z_slider.State(vis) end
+			if ds_rx_slider then ds_rx_slider.State(vis) end
+			if ds_ry_slider then ds_ry_slider.State(vis) end
+			if ds_rz_slider then ds_rz_slider.State(vis) end
+			if ds_randr_toggle then ds_randr_toggle.State(vis) end
+			if ds_randp_toggle then ds_randp_toggle.State(vis) end
+			if ds_range_slider then ds_range_slider.State(vis) end
+			if ds_vel_toggle then ds_vel_toggle.State(vis) end
+			if ds_vx_slider then ds_vx_slider.State(vis) end
+			if ds_vy_slider then ds_vy_slider.State(vis) end
+			if ds_vz_slider then ds_vz_slider.State(vis) end
+			if ds_vis_toggle then ds_vis_toggle.State(vis) end
+		end}):Keybind({Name = "Desync", Mode = "Toggle", Key = Enum.KeyCode.B, Value = false, Flag = "desync_enabled_key", Link = "desync_enabled", Callback = function(bool)
+			desync_enabled_key = desync_enabled and bool
+			ds_keybind.Set(desync_enabled_key, true)
+		end})
+		ds_vis_toggle = dscsec:Toggle({Name = "Visualize desync", Value = false, Flag = "desync_visualize", Callback = function(bool)
+			desync_visualize = bool
+		end})
+		ds_vis_toggle:Colorpicker({Name = "Visualization color", Value = Color3.new(1, 1, 1), Usealpha = true, Flag = "desync_visualize_color", Callback = function(color)
+			main_wireframe.Color3 = color.c
+			main_wireframe.Transparency = color.a
+		end})
+		ds_vis_toggle.State(false)
 
-	dscsec:Slider({Name = "X rotate", Min = 0, Max = 20, Float = 0.1, Value = 0, Flag = "desync_x_rotate", Callback = function(int)
-		desync_x_rotate = math.rad(int * 18)
-	end})
-	dscsec:Slider({Name = "Y rotate", Min = 0, Max = 20, Float = 0.1, Value = 0, Flag = "desync_y_rotate", Callback = function(int)
-		desync_y_rotate = math.rad(int * 18)
-	end})
-	dscsec:Slider({Name = "Z rotate", Min = 0, Max = 20, Float = 0.1, Value = 0, Flag = "desync_z_rotate", Callback = function(int)
-		desync_z_rotate = math.rad(int * 18)
-	end})
+		ds_x_slider = dscsec:Slider({Name = "X offset", Min = -10, Max = 10, Float = 0.1, Value = 0, Flag = "desync_x_offset", Callback = function(int)
+			desync_x_offset = int
+		end})
+		ds_x_slider.State(false)
+		ds_y_slider = dscsec:Slider({Name = "Y offset", Min = -10, Max = 10, Float = 0.1, Value = 0, Flag = "desync_y_offset", Callback = function(int)
+			desync_y_offset = int
+		end})
+		ds_y_slider.State(false)
+		ds_z_slider = dscsec:Slider({Name = "Z offset", Min = -10, Max = 10, Float = 0.1, Value = 0, Flag = "desync_z_offset", Callback = function(int)
+			desync_z_offset = int
+		end})
+		ds_z_slider.State(false)
 
-	dscsec:Toggle({Name = "Random rotation", Value = false, Flag = "desync_random_rotation", Callback = function(bool)
-		desync_random_rotation = bool
-	end})
-	dscsec:Toggle({Name = "Random position", Value = false, Flag = "desync_random_position", Callback = function(bool)
-		desync_random_position = bool
-	end})
-	dscsec:Slider({Name = "Random range", Min = 0, Max = 25, Float = 0.1, Value = 0, Flag = "desync_random_position_range", Callback = function(int)
-		desync_random_position_range = int
-	end})
+		ds_rx_slider = dscsec:Slider({Name = "X rotate", Min = 0, Max = 20, Float = 0.1, Value = 0, Flag = "desync_x_rotate", Callback = function(int)
+			desync_x_rotate = math.rad(int * 18)
+		end})
+		ds_rx_slider.State(false)
+		ds_ry_slider = dscsec:Slider({Name = "Y rotate", Min = 0, Max = 20, Float = 0.1, Value = 0, Flag = "desync_y_rotate", Callback = function(int)
+			desync_y_rotate = math.rad(int * 18)
+		end})
+		ds_ry_slider.State(false)
+		ds_rz_slider = dscsec:Slider({Name = "Z rotate", Min = 0, Max = 20, Float = 0.1, Value = 0, Flag = "desync_z_rotate", Callback = function(int)
+			desync_z_rotate = math.rad(int * 18)
+		end})
+		ds_rz_slider.State(false)
 
-	dscsec:Toggle({Name = "Velocity desync", Value = false, Flag = "desync_velocity", Callback = function(bool)
-		desync_velocity = bool
-	end})
-	dscsec:Slider({Name = "Velocity X", Min = -16384, Max = 16384, Float = 512, Value = 0, Flag = "desync_velocity_x", Callback = function(int)
-		desync_velocity_x = int
-	end})
-	dscsec:Slider({Name = "Velocity Y", Min = -16384, Max = 16384, Float = 512, Value = 0, Flag = "desync_velocity_y", Callback = function(int)
-		desync_velocity_y = int
-	end})
-	dscsec:Slider({Name = "Velocity Z", Min = -16384, Max = 16384, Float = 512, Value = 0, Flag = "desync_velocity_z", Callback = function(int)
-		desync_velocity_z = int
-	end})
+		ds_randr_toggle = dscsec:Toggle({Name = "Random rotation", Value = false, Flag = "desync_random_rotation", Callback = function(bool)
+			desync_random_rotation = bool
+		end})
+		ds_randr_toggle.State(false)
+		ds_randp_toggle = dscsec:Toggle({Name = "Random position", Value = false, Flag = "desync_random_position", Callback = function(bool)
+			desync_random_position = bool
+		end})
+		ds_randp_toggle.State(false)
+		ds_range_slider = dscsec:Slider({Name = "Random range", Min = 0, Max = 25, Float = 0.1, Value = 0, Flag = "desync_random_position_range", Callback = function(int)
+			desync_random_position_range = int
+		end})
+		ds_range_slider.State(false)
+
+		ds_vel_toggle = dscsec:Toggle({Name = "Velocity desync", Value = false, Flag = "desync_velocity", Callback = function(bool)
+			desync_velocity = bool
+		end})
+		ds_vel_toggle.State(false)
+		ds_vx_slider = dscsec:Slider({Name = "Velocity X", Min = -16384, Max = 16384, Float = 512, Value = 0, Flag = "desync_velocity_x", Callback = function(int)
+			desync_velocity_x = int
+		end})
+		ds_vx_slider.State(false)
+		ds_vy_slider = dscsec:Slider({Name = "Velocity Y", Min = -16384, Max = 16384, Float = 512, Value = 0, Flag = "desync_velocity_y", Callback = function(int)
+			desync_velocity_y = int
+		end})
+		ds_vy_slider.State(false)
+		ds_vz_slider = dscsec:Slider({Name = "Velocity Z", Min = -16384, Max = 16384, Float = 512, Value = 0, Flag = "desync_velocity_z", Callback = function(int)
+			desync_velocity_z = int
+		end})
+		ds_vz_slider.State(false)
 
 	RunService.Heartbeat:Connect(LPH_NO_VIRTUALIZE(function()
 		replicated_hrp_cframe = nil
@@ -9628,57 +12831,98 @@ do
 			lighting_changing = false
 		end
 
-		worldbox:Toggle({Name = 'Lighting changer', Flag = 'world_lighting_changer', Value = false, Callback = function(first)
+		local light_ambient_picker, light_outdoor_picker, light_bright_slider, light_csb_picker, light_cst_picker, light_shadows_toggle, light_fogc_picker, light_foge_slider, light_fogs_slider, light_clock_slider = nil, nil, nil, nil, nil, nil, nil, nil, nil, nil
+		local function light_gate(vis)
+			if light_ambient_picker then light_ambient_picker.State(vis) end
+			if light_outdoor_picker then light_outdoor_picker.State(vis) end
+			if light_bright_slider then light_bright_slider.State(vis) end
+			if light_csb_picker then light_csb_picker.State(vis) end
+			if light_cst_picker then light_cst_picker.State(vis) end
+			if light_shadows_toggle then light_shadows_toggle.State(vis) end
+			if light_fogc_picker then light_fogc_picker.State(vis) end
+			if light_foge_slider then light_foge_slider.State(vis) end
+			if light_fogs_slider then light_fogs_slider.State(vis) end
+			if light_clock_slider then light_clock_slider.State(vis) end
+		end
+		local light_toggle = worldbox:Toggle({Name = 'Lighting changer', Flag = 'world_lighting_changer', Value = false, Callback = function(first)
 			lighting_changer = first
+			light_gate(first)
 			append_changes()
 		end})
-		worldbox:Colorpicker({Name = 'Ambient', Flag = 'world_lighting_ambient', Value = Color3.fromRGB(70, 70, 70), Usealpha = false, Callback = function(Value)
+		light_ambient_picker = worldbox:Colorpicker({Name = 'Ambient', Flag = 'world_lighting_ambient', Value = Color3.fromRGB(70, 70, 70), Usealpha = false, Callback = function(Value)
 			lighting_values.Ambient = Value.c
 			append_changes()
 		end})
-		worldbox:Colorpicker({Name = 'OutdoorAmbient', Flag = 'world_lighting_outdoorambient', Value = Color3.fromRGB(70, 70, 70), Usealpha = false, Callback = function(Value)
+		light_ambient_picker.State(false)
+		light_outdoor_picker = worldbox:Colorpicker({Name = 'OutdoorAmbient', Flag = 'world_lighting_outdoorambient', Value = Color3.fromRGB(70, 70, 70), Usealpha = false, Callback = function(Value)
 			lighting_values.OutdoorAmbient = Value.c
 			append_changes()
 		end})
-		worldbox:Slider({Name = 'Brightness', Flag = 'world_lighting_brightness', Value = 1, Min = -5, Max = 15, Float = 0.01, Callback = function(State)
+		light_outdoor_picker.State(false)
+		light_bright_slider = worldbox:Slider({Name = 'Brightness', Flag = 'world_lighting_brightness', Value = 1, Min = -5, Max = 15, Float = 0.01, Callback = function(State)
 			lighting_values.Brightness = State
 			append_changes()
 		end})
-		worldbox:Colorpicker({Name = 'ColorShift_Bottom', Flag = 'world_lighting_colorshift_bottom', Value = Color3.new(), Usealpha = false, Callback = function(Value)
+		light_bright_slider.State(false)
+		light_csb_picker = worldbox:Colorpicker({Name = 'ColorShift_Bottom', Flag = 'world_lighting_colorshift_bottom', Value = Color3.new(), Usealpha = false, Callback = function(Value)
 			lighting_values.ColorShift_Bottom = Value.c
 			append_changes()
 		end})
-		worldbox:Colorpicker({Name = 'ColorShift_Top', Flag = 'world_lighting_colorshift_top', Value = Color3.new(), Usealpha = false, Callback = function(Value)
+		light_csb_picker.State(false)
+		light_cst_picker = worldbox:Colorpicker({Name = 'ColorShift_Top', Flag = 'world_lighting_colorshift_top', Value = Color3.new(), Usealpha = false, Callback = function(Value)
 			lighting_values.ColorShift_Bottom = Value.c
 			append_changes()
 		end})
-		worldbox:Toggle({Name = 'GlobalShadows', Flag = 'world_lighting_globalshadows', Value = true, Callback = function(first)
+		light_cst_picker.State(false)
+		light_shadows_toggle = worldbox:Toggle({Name = 'GlobalShadows', Flag = 'world_lighting_globalshadows', Value = false, Callback = function(first)
 			lighting_values.GlobalShadows = first
 			append_changes()
 		end})
+		light_shadows_toggle.State(false)
 
-		worldbox:Colorpicker({Name = 'FogColor', Flag = 'world_lighting_fogcolor', Value = Color3.fromRGB(192, 192, 192), Usealpha = false, Callback = function(Value)
+		light_fogc_picker = worldbox:Colorpicker({Name = 'FogColor', Flag = 'world_lighting_fogcolor', Value = Color3.fromRGB(192, 192, 192), Usealpha = false, Callback = function(Value)
 			lighting_values.FogColor = Value.c
 			append_changes()
 		end})
-		worldbox:Slider({Name = 'FogEnd', Flag = 'world_lighting_fogend', Value = 100,Min = 0,Max = 10000,Float = 100,Callback = function(State)
+		light_fogc_picker.State(false)
+		light_foge_slider = worldbox:Slider({Name = 'FogEnd', Flag = 'world_lighting_fogend', Value = 100,Min = 0,Max = 10000,Float = 100,Callback = function(State)
 			lighting_values.FogEnd = State
 			append_changes()
 		end})
-		worldbox:Slider({Name = 'FogStart', Flag = 'world_lighting_fogstart', Value = 0,Min = 0,Max = 10000,Float = 100,Callback = function(State)
+		light_foge_slider.State(false)
+		light_fogs_slider = worldbox:Slider({Name = 'FogStart', Flag = 'world_lighting_fogstart', Value = 0,Min = 0,Max = 10000,Float = 100,Callback = function(State)
 			lighting_values.FogStart = State
 			append_changes()
 		end})
-
-		worldbox:Slider({Name = 'ClockTime', Flag = 'world_lighting_clocktime', Value = 14.5,Min = 0,Max = 24,Float = 0.1,Callback = function(State)
+		light_fogs_slider.State(false)
+		light_clock_slider = worldbox:Slider({Name = 'ClockTime', Flag = 'world_lighting_clocktime', Value = 14.5,Min = 0,Max = 24,Float = 0.1,Callback = function(State)
 			lighting_values.ClockTime = State
 			append_changes()
+		end})
+		light_clock_slider.State(false)
+		local no_fog = false
+		worldbox:Toggle({Name = 'No fog', Flag = 'no_fog', Value = false, Callback = function(first)
+			no_fog = first
+			if no_fog then
+				Lighting.FogStart = 0
+				Lighting.FogEnd = 100000
+			elseif lighting_changer then
+				append_changes()
+			else
+				Lighting.FogStart = old_lighting.FogStart
+				Lighting.FogEnd = old_lighting.FogEnd
+			end
 		end})
 
 		for _, method in {"Ambient", "OutdoorAmbient", "Brightness", "ColorShift_Bottom", "ColorShift_Top", "GlobalShadows", "FogColor", "FogEnd", "FogStart", "ClockTime"} do
 			Lighting:GetPropertyChangedSignal(method):Connect(function()
 				if not lighting_changing then
 					old_lighting[method] = Lighting[method]
+				end
+				if no_fog and (method == "FogStart" or method == "FogEnd") then
+					Lighting.FogStart = 0
+					Lighting.FogEnd = 100000
+					return
 				end
 				if not lighting_changer then return end
 				Lighting[method] = lighting_values[method]
@@ -9690,6 +12934,44 @@ do
 		miscbox:Toggle({Name = 'No grass', Flag = 'no_grass', Value = false, Callback = function(first)
 			sethiddenproperty(workspace.Terrain, "Decoration", not first)
 		end})
+		local weather_mode, weather_on, grass_color, terrain_colors = "No Weather", false, Color3.fromRGB(90, 170, 90), false
+		local weather_effect
+		local weather_dropdown = nil
+		local weather_toggle = miscbox:Toggle({Name = "Weather control", Value = false, Flag = "weather_enabled", Callback = function(bool)
+			weather_on = bool
+			if weather_dropdown then weather_dropdown.State(bool) end
+		end})
+		weather_dropdown = miscbox:Dropdown({Name = "Weather", Values = {"No Weather", "Clear", "Rain", "Snow", "Fog"}, Value = "No Weather", Flag = "weather_mode", Multi = false, Callback = function(value)
+			weather_mode = value
+		end})
+		weather_dropdown.State(false)
+		local terrain_grass_picker = nil
+		local terrain_toggle = miscbox:Toggle({Name = "Terrain material Colors", Value = false, Flag = "terrain_colors", Callback = function(bool)
+			terrain_colors = bool
+			if terrain_grass_picker then terrain_grass_picker.State(bool) end
+		end})
+		terrain_grass_picker = miscbox:Colorpicker({Name = "Terrain grass color", Value = Color3.fromRGB(90, 170, 90), Usealpha = false, Flag = "terrain_grass_color", Callback = function(value)
+			grass_color = value.c
+			if terrain_colors then workspace.Terrain:SetMaterialColor(Enum.Material.Grass, value.c) end
+		end})
+		terrain_grass_picker.State(false)
+		cheat.utility.new_renderstepped(function()
+			if not weather_on then
+				if weather_effect then weather_effect.Enabled = false end
+				return
+			end
+			if not weather_effect then
+				weather_effect = Instance.new("ColorCorrectionEffect")
+				weather_effect.Name = "DeltaWeather"
+				weather_effect.Parent = Lighting
+			end
+			weather_effect.Enabled = true
+			weather_effect.TintColor = weather_mode == "Rain" and Color3.fromRGB(170, 190, 220) or weather_mode == "Snow" and Color3.fromRGB(220, 230, 255) or weather_mode == "Fog" and Color3.fromRGB(190, 190, 190) or Color3.new(1, 1, 1)
+			weather_effect.Brightness = weather_mode == "Fog" and -0.05 or 0
+			if terrain_colors and grass_color then
+				workspace.Terrain:SetMaterialColor(Enum.Material.Grass, grass_color)
+			end
+		end)
 		do
 			local atmosphere = _FindFirstChildOfClass(Lighting, "Atmosphere")
 			if not atmosphere then
@@ -9722,34 +13004,48 @@ do
 				atmosphere_changing = false
 			end
 
-			miscbox:Toggle({Name = 'Atmosphere changer', Flag = 'world_atmosphere_changer', Value = false,Callback = function(first)
+			local atmo_density_slider, atmo_offset_slider, atmo_color_picker, atmo_decay_picker, atmo_glare_slider, atmo_haze_slider = nil, nil, nil, nil, nil, nil
+			local atmo_toggle = miscbox:Toggle({Name = 'Atmosphere changer', Flag = 'world_atmosphere_changer', Value = false,Callback = function(first)
 				atmosphere_changer = first
+				local vis = first and true or false
+				if atmo_density_slider then atmo_density_slider.State(vis) end
+				if atmo_offset_slider then atmo_offset_slider.State(vis) end
+				if atmo_color_picker then atmo_color_picker.State(vis) end
+				if atmo_decay_picker then atmo_decay_picker.State(vis) end
+				if atmo_glare_slider then atmo_glare_slider.State(vis) end
+				if atmo_haze_slider then atmo_haze_slider.State(vis) end
 				append_changes()
 			end})
-			miscbox:Slider({Name = 'Density', Flag = 'world_atmosphere_density', Value = 0.9,Min = 0,Max = 1,Float = 0.01,Callback = function(State)
+			atmo_density_slider = miscbox:Slider({Name = 'Density', Flag = 'world_atmosphere_density', Value = 0.9,Min = 0,Max = 1,Float = 0.01,Callback = function(State)
 				atmosphere_values.Density = State
 				append_changes()
 			end})
-			miscbox:Slider({Name = 'Offset', Flag = 'world_atmosphere_offset', Value = 1,Min = 0,Max = 1,Float = 0.01,Callback = function(State)
+			atmo_density_slider.State(false)
+			atmo_offset_slider = miscbox:Slider({Name = 'Offset', Flag = 'world_atmosphere_offset', Value = 1,Min = 0,Max = 1,Float = 0.01,Callback = function(State)
 				atmosphere_values.Offset = State
 				append_changes()
 			end})
-			miscbox:Colorpicker({Name = 'Color', Flag = 'world_atmosphere_color', Value = Color3.new(1, 1, 1), Usealpha = false, Callback = function(Value)
+			atmo_offset_slider.State(false)
+			atmo_color_picker = miscbox:Colorpicker({Name = 'Color', Flag = 'world_atmosphere_color', Value = Color3.new(1, 1, 1), Usealpha = false, Callback = function(Value)
 				atmosphere_values.Color = Value.c
 				append_changes()
 			end})
-			miscbox:Colorpicker({Name = 'Decay', Flag = 'world_atmosphere_decay', Value = Color3.new(0.8, 0.8, 0.8), Usealpha = false, Callback = function(Value)
+			atmo_color_picker.State(false)
+			atmo_decay_picker = miscbox:Colorpicker({Name = 'Decay', Flag = 'world_atmosphere_decay', Value = Color3.new(0.8, 0.8, 0.8), Usealpha = false, Callback = function(Value)
 				atmosphere_values.Decay = Value.c
 				append_changes()
 			end})
-			miscbox:Slider({Name = 'Glare', Flag = 'world_atmosphere_glare', Value = 1,Min = 0,Max = 20,Float = 0.1,Callback = function(State)
+			atmo_decay_picker.State(false)
+			atmo_glare_slider = miscbox:Slider({Name = 'Glare', Flag = 'world_atmosphere_glare', Value = 1,Min = 0,Max = 20,Float = 0.1,Callback = function(State)
 				atmosphere_values.Glare = State
 				append_changes()
 			end})
-			miscbox:Slider({Name = 'Haze', Flag = 'world_atmosphere_haze', Value = 1,Min = 0,Max = 20,Float = 0.1,Callback = function(State)
+			atmo_glare_slider.State(false)
+			atmo_haze_slider = miscbox:Slider({Name = 'Haze', Flag = 'world_atmosphere_haze', Value = 1,Min = 0,Max = 20,Float = 0.1,Callback = function(State)
 				atmosphere_values.Haze = State
 				append_changes()
 			end})
+			atmo_haze_slider.State(false)
 
 			for _, method in {"Density", "Offset", "Color", "Decay", "Glare", "Haze"} do
 				atmosphere:GetPropertyChangedSignal(method):Connect(function()
@@ -9790,26 +13086,36 @@ do
 				bloom_changing = false
 			end
 
-			miscbox:Toggle({Name = 'Bloom changer', Flag = 'world_bloom_changer', Value = false,Callback = function(first)
+			local bloom_enabled_toggle, bloom_intensity_slider, bloom_size_slider, bloom_threshold_slider = nil, nil, nil, nil
+			local bloom_toggle = miscbox:Toggle({Name = 'Bloom changer', Flag = 'world_bloom_changer', Value = false,Callback = function(first)
 				bloom_changer = first
+				local vis = first and true or false
+				if bloom_enabled_toggle then bloom_enabled_toggle.State(vis) end
+				if bloom_intensity_slider then bloom_intensity_slider.State(vis) end
+				if bloom_size_slider then bloom_size_slider.State(vis) end
+				if bloom_threshold_slider then bloom_threshold_slider.State(vis) end
 				append_changes()
 			end})
-			miscbox:Toggle({Name = 'Enabled', Flag = 'world_bloom_enabled', Value = false,Callback = function(first)
+			bloom_enabled_toggle = miscbox:Toggle({Name = 'Enabled', Flag = 'world_bloom_enabled', Value = false,Callback = function(first)
 				bloom_values.Enabled = first
 				append_changes()
 			end})
-			miscbox:Slider({Name = 'Intensity', Flag = 'world_bloom_intensity', Value = 1,Min = 0,Max = 5,Float = 0.01,Callback = function(State)
+			bloom_enabled_toggle.State(false)
+			bloom_intensity_slider = miscbox:Slider({Name = 'Intensity', Flag = 'world_bloom_intensity', Value = 1,Min = 0,Max = 5,Float = 0.01,Callback = function(State)
 				bloom_values.Intensity = State
 				append_changes()
 			end})
-			miscbox:Slider({Name = 'Size', Flag = 'world_bloom_size', Value = 56,Min = 0,Max = 80,Float = 1,Callback = function(State)
+			bloom_intensity_slider.State(false)
+			bloom_size_slider = miscbox:Slider({Name = 'Size', Flag = 'world_bloom_size', Value = 56,Min = 0,Max = 80,Float = 1,Callback = function(State)
 				bloom_values.Size = State
 				append_changes()
 			end})
-			miscbox:Slider({Name = 'Threshold', Flag = 'world_bloom_threshold', Value = 2,Min = 0,Max = 10,Float = 0.1,Callback = function(State)
+			bloom_size_slider.State(false)
+			bloom_threshold_slider = miscbox:Slider({Name = 'Threshold', Flag = 'world_bloom_threshold', Value = 2,Min = 0,Max = 10,Float = 0.1,Callback = function(State)
 				bloom_values.Threshold = State
 				append_changes()
 			end})
+			bloom_threshold_slider.State(false)
 
 			for _, method in {"Intensity", "Size", "Threshold"} do
 				bloom:GetPropertyChangedSignal(method):Connect(function()
@@ -9822,6 +13128,679 @@ do
 			end
 		end
 	end
+end
+
+do
+	local skin_weapons_sec = ui.sections.skins_browser
+	local skin_list_sec = ui.sections.skins_actions
+	local mods_sec = ui.sections.weapon_mods
+	local guns_sec = ui.sections.weapon_list
+
+	local function skins_folder()
+		return game:GetService("ReplicatedStorage"):FindFirstChild("Skins")
+	end
+	local function items_list()
+		return game:GetService("ReplicatedStorage"):FindFirstChild("ItemsList")
+	end
+	local function items_models()
+		return game:GetService("ReplicatedStorage"):FindFirstChild("ItemsListModels")
+	end
+	local function skin_item_names()
+		local f = skins_folder()
+		local out = {}
+		if f then
+			for _, i in f:GetChildren() do out[#out + 1] = i.Name end
+		end
+		table.sort(out)
+		return out
+	end
+	local function item_icon(name)
+		local list = items_list()
+		if not list then return "" end
+		local function icon_of(entry)
+			if not entry then return nil end
+			local props = entry:FindFirstChild("ItemProperties")
+			if props then
+				local attr = props:GetAttribute("ItemIcon") or props:GetAttribute("Icon")
+				if type(attr) == "string" and attr:find("://", 1, true) then return attr end
+				local icon = props:FindFirstChild("ItemIcon")
+				if icon and icon.Image ~= "" then return icon.Image end
+			end
+			local deep = entry:FindFirstChild("ItemIcon", true)
+			if deep and deep:IsA("ImageLabel") and deep.Image ~= "" then return deep.Image end
+			return nil
+		end
+		local direct = list:FindFirstChild(name)
+		local img = icon_of(direct)
+		if img then return img end
+		local f = skins_folder()
+		local folder = f and f:FindFirstChild(name)
+		if folder then
+			for _, skn in folder:GetChildren() do
+				local attr = skn:GetAttribute("ItemIcon")
+				if type(attr) == "string" and attr:find("://", 1, true) then return attr end
+				local sic = skn:FindFirstChild("ItemIcon", true)
+				if sic and sic:IsA("ImageLabel") and sic.Image ~= "" then return sic.Image end
+			end
+		end
+		local base = tostring(name):gsub("_unlocked$", ""):gsub("_T%d+$", "")
+		if base ~= name then
+			img = icon_of(list:FindFirstChild(base))
+			if img then return img end
+		end
+		for _, entry in list:GetChildren() do
+			if entry.Name == base or string.find(entry.Name, base, 1, true) or string.find(base, entry.Name, 1, true) then
+				img = icon_of(entry)
+				if img then return img end
+			end
+		end
+		return ""
+	end
+	local function skin_icon(item, skin)
+		local f = skins_folder()
+		local folder = f and f:FindFirstChild(item)
+		local skn = folder and folder:FindFirstChild(skin)
+		if skn then
+			local attr = skn:GetAttribute("ItemIcon")
+			if type(attr) == "string" and attr:find("://", 1, true) then return attr end
+			local icon = skn:FindFirstChild("ItemIcon", true)
+			if icon and icon:IsA("ImageLabel") and icon.Image ~= "" then return icon.Image end
+		end
+		return item_icon(item)
+	end
+	local function skin_names_of(item, filter)
+		local f = skins_folder()
+		local folder = f and f:FindFirstChild(item)
+		local out = {}
+		if folder then
+			for _, s in folder:GetChildren() do
+				if not filter or filter == "" or string.find(string.lower(s.Name), string.lower(filter), 1, true) then
+					out[#out + 1] = s.Name
+				end
+			end
+		end
+		table.sort(out)
+		if #out == 0 then out = {"Default"} end
+		return out
+	end
+	local skin_choices = {}
+	local skin_item, skin_name, skin_filter = nil, "Default", ""
+	local skin_auto = true
+	local skin_last_model = nil
+	local function skin_key_of(obj)
+		if typeof(obj) ~= "Instance" or not obj:IsA("ObjectValue") then return nil end
+		local ref = obj.Value
+		if not ref then return nil end
+		local props = ref:FindFirstChild("ItemProperties")
+		local special = props and props:GetAttribute("SpecialSkinItem")
+		if type(special) == "string" and special ~= "" then return special end
+		return ref.Name
+	end
+	local function skin_owned(item)
+		local out = {}
+		local seen = {}
+		local folder = game:GetService("ReplicatedStorage"):FindFirstChild("Players")
+		local data = folder and folder:FindFirstChild(LocalPlayer.Name)
+		if not data then return out end
+		local valid = {[item] = true}
+		local f = skins_folder()
+		local skins = f and f:FindFirstChild(item)
+		if skins then
+			for _, s in skins:GetChildren() do
+				local ms = s:GetAttribute("ModelSkin")
+				if type(ms) == "string" and ms ~= "" then valid[ms] = true end
+			end
+		end
+		local function scan(root)
+			if not root then return end
+			for _, v in root:GetChildren() do
+				if not seen[v] and v:IsA("ObjectValue") then
+					if valid[v.Name] or valid[skin_key_of(v) or ""] then
+						seen[v] = true
+						out[#out + 1] = v
+					end
+				end
+				local inner = v:FindFirstChild("Inventory")
+				if inner then scan(inner) end
+			end
+		end
+		scan(data:FindFirstChild("Inventory"))
+		scan(data:FindFirstChild("Hotbar"))
+		return out
+	end
+	local function skin_stamp(obj, item, skin)
+		local list = items_list()
+		local f = skins_folder()
+		local sk = f and f:FindFirstChild(item)
+		local skn = sk and sk:FindFirstChild(skin)
+		local model_skin = skn and skn:GetAttribute("ModelSkin")
+		local target = (type(model_skin) == "string" and model_skin ~= "" and model_skin) or nil
+		if not target and list and list:FindFirstChild(item) then target = item end
+		if obj:GetAttribute("Skin") == skin and (not target or obj.Name == target) then return false end
+		if target and obj.Name ~= target then
+			obj.Name = target
+			local ref = list and list:FindFirstChild(target)
+			if ref then obj.Value = ref end
+		end
+		obj:SetAttribute("Skin", skin)
+		return true
+	end
+	local function skin_apply(item, skin)
+		local n = 0
+		for _, obj in skin_owned(item) do
+			if skin_stamp(obj, item, skin) then n += 1 end
+		end
+		local vm = Camera and _FindFirstChildOfClass(Camera, "Model")
+		if vm then cheat.dressSkin(vm, item, skin) end
+		local char = LocalPlayer.Character
+		local tool = char and _FindFirstChildOfClass(char, "Tool")
+		if tool then cheat.dressSkin(tool, item, skin) end
+		return n
+	end
+	local function skin_serialize()
+		local out = {}
+		for item, skin in skin_choices do
+			out[#out + 1] = item .. "/" .. skin
+		end
+		table.sort(out)
+		return table.concat(out, ";")
+	end
+	Library.Flags["skins_saves"] = Library.Flags["skins_saves"] or ""
+	Library.ConfigFlags["skins_saves"] = function(v)
+		if type(v) ~= "string" or v == "" then return end
+		local n = 0
+		for chunk in v:gmatch("[^;]+") do
+			local item, skin = chunk:match("^%s*([^/]+)/([^/]+)%s*$")
+			if item and skin then
+				skin_choices[item] = skin
+				n += skin_apply(item, skin)
+			end
+		end
+		Library.Flags["skins_saves"] = v
+		Library.Notification("Skins loaded (" .. n .. " applied)", 3)
+	end
+	local function make_grid(parent)
+		local f = Instance.new("Frame")
+		f.Name = "IconGrid"
+		f.BackgroundTransparency = 1
+		f.BorderSizePixel = 0
+		f.Size = UDim2.new(1, 0, 0, 0)
+		f.AutomaticSize = Enum.AutomaticSize.Y
+		f.Parent = parent
+		local layout = Instance.new("UIGridLayout")
+		layout.CellSize = UDim2.fromOffset(52, 52)
+		layout.CellPadding = UDim2.fromOffset(4, 4)
+		layout.SortOrder = Enum.SortOrder.LayoutOrder
+		layout.Parent = f
+		local pad = Instance.new("UIPadding")
+		pad.PaddingLeft = UDim.new(0, 10)
+		pad.Parent = f
+		return f
+	end
+	local function grid_cell(grid, image, caption, order)
+		local b = Instance.new("ImageButton")
+		b.Name = caption
+		b.LayoutOrder = order or 0
+		b.BackgroundColor3 = Color3.fromRGB(28, 28, 30)
+		b.BorderSizePixel = 0
+		b.Image = image or ""
+		b.ScaleType = Enum.ScaleType.Fit
+		b.Parent = grid
+		local stroke = Instance.new("UIStroke")
+		stroke.Thickness = 1
+		stroke.Color = Color3.fromRGB(70, 70, 70)
+		stroke.Parent = b
+		local label = Instance.new("TextLabel")
+		label.BackgroundTransparency = 1
+		label.BorderSizePixel = 0
+		label.AnchorPoint = Vector2.new(0, 1)
+		label.Position = UDim2.new(0, 0, 1, 0)
+		label.Size = UDim2.new(1, 0, 0, 14)
+		label.Font = Enum.Font.Gotham
+		label.TextSize = 9
+		label.TextColor3 = Color3.fromRGB(220, 220, 220)
+		label.TextStrokeTransparency = 0.5
+		label.TextTruncate = Enum.TextTruncate.AtEnd
+		label.Text = caption
+		label.Parent = b
+		return b, stroke
+	end
+	local skin_weapon_grid = make_grid(skin_weapons_sec.holder)
+	local skin_grid = make_grid(skin_list_sec.holder)
+	local skin_weapon_buttons, skin_buttons = {}, {}
+	local function skin_select_weapon(item)
+		skin_item = item
+		for name, pair in skin_weapon_buttons do
+			pair[2].Color = (name == item) and Library.Theme.accent or Color3.fromRGB(70, 70, 70)
+		end
+		for _, c in skin_grid:GetChildren() do
+			if c:IsA("ImageButton") then c:Destroy() end
+		end
+		table.clear(skin_buttons)
+		local names = skin_names_of(item, "")
+		skin_name = names[1]
+		for idx, name in names do
+			local b, stroke = grid_cell(skin_grid, skin_icon(item, name), name, idx)
+			skin_buttons[name] = {b, stroke}
+			b.MouseButton1Click:Connect(function()
+				skin_name = name
+				for n2, pair in skin_buttons do
+					pair[2].Color = (n2 == name) and Library.Theme.accent or Color3.fromRGB(70, 70, 70)
+				end
+			end)
+		end
+		local first = skin_buttons[skin_name]
+		if first then first[2].Color = Library.Theme.accent end
+	end
+	local function skin_rebuild_weapons()
+		for _, c in skin_weapon_grid:GetChildren() do
+			if c:IsA("ImageButton") then c:Destroy() end
+		end
+		table.clear(skin_weapon_buttons)
+		local items = skin_item_names()
+		local idx = 0
+		for _, item in items do
+			if skin_filter == "" or string.find(string.lower(item), string.lower(skin_filter), 1, true) then
+				idx += 1
+				local b, stroke = grid_cell(skin_weapon_grid, item_icon(item), item, idx)
+				skin_weapon_buttons[item] = {b, stroke}
+				b.MouseButton1Click:Connect(function()
+					skin_select_weapon(item)
+				end)
+			end
+		end
+		if skin_item and not skin_weapon_buttons[skin_item] then skin_item = nil end
+	end
+	skin_list_sec:Textbox({Name = "Search", Value = "", Flag = "skins_search", Callback = function()
+		skin_filter = Library.Flags["skins_search"] or ""
+		skin_rebuild_weapons()
+		if skin_item and skin_weapon_buttons[skin_item] then skin_select_weapon(skin_item) end
+	end})
+	skin_list_sec:Button({Name = "Apply skin", Callback = function()
+		if not skin_item or not skin_name then
+			Library.Notification("Pick a weapon and a skin", 2.5)
+			return
+		end
+		skin_choices[skin_item] = skin_name
+		local n = skin_apply(skin_item, skin_name)
+		Library.Flags["skins_saves"] = skin_serialize()
+		Library.Notification("Skin set on " .. n .. " item(s): " .. skin_item, 3)
+	end})
+	skin_list_sec:Button({Name = "Remove skin", Callback = function()
+		if not skin_item then
+			Library.Notification("Pick a weapon first", 2.5)
+			return
+		end
+		skin_choices[skin_item] = nil
+		local n = skin_apply(skin_item, "Default")
+		Library.Flags["skins_saves"] = skin_serialize()
+		Library.Notification("Skin cleared on " .. n .. " item(s)", 3)
+	end})
+	skin_rebuild_weapons()
+	cheat.utility.new_heartbeat(function()
+		if not skin_auto then return end
+		local vm = Camera and _FindFirstChildOfClass(Camera, "Model")
+		if vm and vm ~= skin_last_model then
+			skin_last_model = vm
+			local it = _FindFirstChild(vm, "Item")
+			local name = (it and skin_choices[it.Name] and it.Name) or (skin_choices[vm.Name] and vm.Name)
+			if name then cheat.dressSkin(vm, name, skin_choices[name]) end
+		end
+	end)
+	local skin_attr_tick = 0
+	cheat.utility.new_heartbeat(function()
+		if not skin_auto or os.clock() - skin_attr_tick < 2 then return end
+		skin_attr_tick = os.clock()
+		for item, skin in skin_choices do
+			local owned = skin_owned(item)
+			if #owned > 0 then
+				local need = false
+				for _, obj in owned do
+					if obj:GetAttribute("Skin") ~= skin then need = true break end
+				end
+				if need then skin_apply(item, skin) end
+			end
+		end
+	end)
+	local attach_defaults = {
+		AKMN = {Stock = "StockAKMN", Front = "FrontAKMN", Handle = "HandleAKMN", Magazine = "762x39MAG"},
+		AKM = {Stock = "ImprStockAKM", Handle = "ImprHandleAKM", Magazine = "762x39ImprMAG"},
+		SKS = {Stock = "StockSKS", Front = "FrontSKS"},
+		M4 = {Stock = "StockM4", Front = "FrontM4", Handle = "HandleM4", Magazine = "Mag556"},
+		ADAR15 = {Stock = "StockADAR", Front = "FrontADAR", Magazine = "Mag556"},
+		FAL = {Stock = "StockFAL", Front = "FrontFAL", Handle = "HandleFAL"},
+		AsVal = {Stock = "StockAsVal", Front = "FrontAsVal", Handle = "HandleAsVal", Magazine = "9x39Mag"},
+		SOCOM556 = {Magazine = "Mag556"},
+		SVD = {Stock = "StockSVD", Front = "FrontSVD", Magazine = "762x54Rnd10Mag"},
+		Mosin = {Stock = "DefaultStockMosin", Front = "DefaultFrontMosin"},
+		R700 = {Front = "FrontTimberwolf", Magazine = "MagR700"},
+		TFZ98S = {Magazine = "MagTFZ98"},
+		PPSH41 = {Stock = "StockPPSH41", Magazine = "762x25Rnd71Mag"},
+		VZ61 = {Magazine = "9x18vzMag"},
+		Saiga12 = {Front = "FrontSaiga", Magazine = "SaigaMag5rnd"},
+		IZh81 = {Stock = "StockIZh81", Front = "FrontIZh81"},
+		IZh12 = {Stock = "StockIZh12", Front = "FrontIZh12"},
+		TOZ106 = {Magazine = "MagTOZ106"},
+		Makarov = {Magazine = "9x18MakarovMAG"},
+		GoldenMakarov = {Magazine = "9x18MakarovMAG"},
+		MP443 = {Magazine = "9x19MP443MAG"},
+		TT33 = {Magazine = "762x25TTMAG"},
+		MK23 = {Magazine = "MK23ExtMag"}
+	}
+	local wep_edits = ""
+	local wep_auto, wep_unlock = true, false
+	local wep_weapon, wep_slot, wep_att = nil, nil, nil
+	local wep_slot_dd, wep_att_dd
+	local function wep_display(name)
+		local list = items_list()
+		local it = list and list:FindFirstChild(name)
+		local props = it and it:FindFirstChild("ItemProperties")
+		local disp = props and props:GetAttribute("Name")
+		if type(disp) == "string" and disp ~= "" then return disp end
+		return tostring(name)
+	end
+	local function wep_is_gun(name)
+		local list = items_list()
+		local it = list and list:FindFirstChild(name)
+		local props = it and it:FindFirstChild("ItemProperties")
+		if not props then return true end
+		local t = props:GetAttribute("ItemType")
+		if type(t) ~= "string" or t == "" then return true end
+		return t == "RangedWeapon"
+	end
+	local function wep_gun_names()
+		local models = items_models()
+		local out = {}
+		if models then
+			for _, m in models:GetChildren() do
+				if m:FindFirstChild("AttachmentPoints") and wep_is_gun(m.Name) then
+					out[#out + 1] = m.Name
+				end
+			end
+		end
+		table.sort(out)
+		return out
+	end
+	local function wep_slots(weapon)
+		local models = items_models()
+		local out = {}
+		local seen = {}
+		local m = models and models:FindFirstChild(weapon)
+		local ap = m and m:FindFirstChild("AttachmentPoints")
+		if ap then
+			for _, s in ap:GetChildren() do
+				if s.Name ~= "Magazine" and not seen[s.Name] then
+					seen[s.Name] = true
+					out[#out + 1] = s.Name
+				end
+			end
+		end
+		if wep_unlock then
+			for _, s in {"Front", "Handle", "Stock", "Grip"} do
+				if not seen[s] then
+					seen[s] = true
+					out[#out + 1] = s
+				end
+			end
+		end
+		table.sort(out)
+		return out
+	end
+	local function wep_compat()
+		local list = items_list()
+		local map = {}
+		if list then
+			for _, it in list:GetChildren() do
+				local props = it:FindFirstChild("ItemProperties")
+				local cp = props and props:FindFirstChild("CompatibleParts")
+				if cp then
+					local ok, attrs = pcall(function() return cp:GetAttributes() end)
+					if ok and type(attrs) == "table" then
+						for att, slot in attrs do
+							if type(slot) == "string" and slot ~= "" and list:FindFirstChild(att) then
+								map[slot] = map[slot] or {}
+								map[slot][att] = true
+							end
+						end
+					end
+				end
+			end
+		end
+		return map
+	end
+	local wep_compat_cache = nil
+	local function wep_options(weapon, slot)
+		if not wep_compat_cache then wep_compat_cache = wep_compat() end
+		local set = {}
+		if wep_compat_cache[slot] then
+			for att in wep_compat_cache[slot] do set[att] = true end
+		end
+		local def = attach_defaults[weapon] and attach_defaults[weapon][slot]
+		if def then set[def] = true end
+		local guess = items_list() and items_list():FindFirstChild(slot .. weapon)
+		if guess then set[slot .. weapon] = true end
+		local out = {}
+		for att in set do out[#out + 1] = att end
+		table.sort(out)
+		return out
+	end
+	local function wep_owned(name)
+		local out = {}
+		local seen = {}
+		local folder = game:GetService("ReplicatedStorage"):FindFirstChild("Players")
+		local data = folder and folder:FindFirstChild(LocalPlayer.Name)
+		if not data then return out end
+		local function scan(root)
+			if not root then return end
+			for _, v in root:GetChildren() do
+				if not seen[v] and v:FindFirstChild("Attachments") then
+					if name == nil or v.Name == name then
+						seen[v] = true
+						out[#out + 1] = v
+					end
+				end
+				local inner = v:FindFirstChild("Inventory")
+				if inner then scan(inner) end
+			end
+		end
+		scan(data:FindFirstChild("Inventory"))
+		scan(data:FindFirstChild("Hotbar"))
+		return out
+	end
+	local function wep_current(gun, slot)
+		local atts = gun:FindFirstChild("Attachments")
+		if not atts then return nil end
+		for _, a in atts:GetChildren() do
+			if a:GetAttribute("Slot") == slot then return a.Name end
+		end
+		return nil
+	end
+	local function wep_default(weapon, slot)
+		local d = attach_defaults[weapon] and attach_defaults[weapon][slot]
+		if d then return d end
+		local guess = slot .. weapon
+		if items_list() and items_list():FindFirstChild(guess) then return guess end
+		return nil
+	end
+	local function wep_parse(str)
+		local map = {}
+		for chunk in tostring(str or ""):gmatch("[^;]+") do
+			local w, s, a = chunk:match("^%s*([^/]+)/([^/]+)/([^/]+)%s*$")
+			if w and s and a then
+				map[w] = map[w] or {}
+				map[w][s] = a
+			end
+		end
+		return map
+	end
+	local function wep_serialize(map)
+		local out = {}
+		for w, slots in map do
+			for s, a in slots do out[#out + 1] = w .. "/" .. s .. "/" .. a end
+		end
+		return table.concat(out, ";")
+	end
+	local function wep_stamp(gun, slot, att)
+		local atts = gun:FindFirstChild("Attachments")
+		if not atts then return end
+		local cur = nil
+		for _, a in atts:GetChildren() do
+			if a:GetAttribute("Slot") == slot then cur = a break end
+		end
+		if not cur then
+			cur = Instance.new("ObjectValue")
+			cur.Parent = atts
+		end
+		pcall(function()
+			cur.Name = att
+			local list = items_list()
+			cur.Value = list and list:FindFirstChild(att)
+			cur:SetAttribute("Slot", slot)
+			atts:SetAttribute(slot, att)
+		end)
+	end
+	local function wep_apply_all()
+		local map = wep_parse(wep_edits)
+		if not next(map) then return 0 end
+		local n = 0
+		for _, gun in wep_owned(nil) do
+			local slots = map[gun.Name]
+			if slots then
+				for slot, att in slots do
+					if att == "-" then
+						local atts = gun:FindFirstChild("Attachments")
+						local cur = atts and (function()
+							for _, a in atts:GetChildren() do
+								if a:GetAttribute("Slot") == slot then return a end
+							end
+						end)()
+						if cur then pcall(function() cur:Destroy() end) n += 1 end
+					else
+						wep_stamp(gun, slot, att)
+						n += 1
+					end
+				end
+			end
+		end
+		return n
+	end
+	local function wep_status()
+		if not wep_weapon or not wep_slot then return "pick a weapon and slot" end
+		local map = wep_parse(wep_edits)
+		local edited = map[wep_weapon] and map[wep_weapon][wep_slot]
+		if edited then return "edited: " .. edited end
+		local gun = wep_owned(wep_weapon)[1]
+		local fitted = gun and wep_current(gun, wep_slot)
+		if fitted then return "fitted: " .. fitted end
+		local def = wep_default(wep_weapon, wep_slot)
+		if def then return "default: " .. def end
+		return "empty"
+	end
+	local wep_refresh_slots, wep_refresh_atts
+	local gun_grid = make_grid(guns_sec.holder)
+	local att_grid = make_grid(mods_sec.holder)
+	local gun_buttons, att_buttons = {}, {}
+	wep_refresh_slots = function()
+		local slots = wep_weapon and wep_slots(wep_weapon) or {}
+		wep_slot = slots[1]
+		if wep_slot_dd then
+			wep_slot_dd.Refresh(slots)
+			if wep_slot then wep_slot_dd.Set(wep_slot, true) end
+		end
+		wep_refresh_atts()
+	end
+	wep_refresh_atts = function()
+		if not att_grid then return end
+		for _, c in att_grid:GetChildren() do
+			if c:IsA("ImageButton") then c:Destroy() end
+		end
+		table.clear(att_buttons)
+		wep_att = "Empty"
+		if not (wep_weapon and wep_slot) then return end
+		local opts = wep_options(wep_weapon, wep_slot)
+		local vals = {"Empty"}
+		for _, o in opts do vals[#vals + 1] = o end
+		for idx, name in vals do
+			local b, stroke = grid_cell(att_grid, name == "Empty" and "" or item_icon(name), name, idx)
+			att_buttons[name] = {b, stroke}
+			b.MouseButton1Click:Connect(function()
+				wep_att = name
+				for n2, pair in att_buttons do
+					pair[2].Color = (n2 == name) and Library.Theme.accent or Color3.fromRGB(70, 70, 70)
+				end
+			end)
+		end
+		local first = att_buttons["Empty"]
+		if first then first[2].Color = Library.Theme.accent end
+	end
+	local function wep_select_gun(name)
+		wep_weapon = name
+		wep_compat_cache = nil
+		for n2, pair in gun_buttons do
+			pair[2].Color = (n2 == name) and Library.Theme.accent or Color3.fromRGB(70, 70, 70)
+		end
+		wep_refresh_slots()
+	end
+	do
+		local guns = wep_gun_names()
+		for idx, name in guns do
+			local b, stroke = grid_cell(gun_grid, item_icon(name), name, idx)
+			gun_buttons[name] = {b, stroke}
+			b.MouseButton1Click:Connect(function()
+				wep_select_gun(name)
+			end)
+		end
+	end
+	wep_slot_dd = mods_sec:Dropdown({Name = "Slot", Values = {}, Value = nil, Flag = "wep_slot", Multi = false, Callback = function(value)
+		wep_slot = value
+		wep_refresh_atts()
+	end})
+	mods_sec:Button({Name = "Apply attachment", Callback = function()
+		if not wep_weapon or not wep_slot then
+			Library.Notification("Pick a weapon and slot", 2.5)
+			return
+		end
+		local map = wep_parse(wep_edits)
+		map[wep_weapon] = map[wep_weapon] or {}
+		if not wep_att or wep_att == "Empty" then
+			map[wep_weapon][wep_slot] = "-"
+		else
+			map[wep_weapon][wep_slot] = wep_att
+		end
+		if not next(map[wep_weapon]) then map[wep_weapon] = nil end
+		wep_edits = wep_serialize(map)
+		Library.Flags["weapon_edits"] = wep_edits
+		local n = wep_apply_all()
+		Library.Notification("Edits: " .. wep_status() .. " (" .. n .. " stamped)", 3)
+	end})
+	mods_sec:Button({Name = "Clear slot", Callback = function()
+		if not wep_weapon or not wep_slot then
+			Library.Notification("Pick a weapon and slot", 2.5)
+			return
+		end
+		local map = wep_parse(wep_edits)
+		map[wep_weapon] = map[wep_weapon] or {}
+		map[wep_weapon][wep_slot] = "-"
+		if not next(map[wep_weapon]) then map[wep_weapon] = nil end
+		wep_edits = wep_serialize(map)
+		Library.Flags["weapon_edits"] = wep_edits
+		local n = wep_apply_all()
+		Library.Notification("Slot cleared (" .. n .. " removed)", 3)
+	end})
+	Library.Flags["weapon_edits"] = Library.Flags["weapon_edits"] or ""
+	Library.ConfigFlags["weapon_edits"] = function(v)
+		wep_edits = tostring(v or "")
+		Library.Flags["weapon_edits"] = wep_edits
+		local n = wep_apply_all()
+		Library.Notification("Weapon edits loaded (" .. n .. " stamped)", 3)
+	end
+	local wep_auto_tick = 0
+	cheat.utility.new_heartbeat(function()
+		if wep_auto and wep_edits ~= "" and os.clock() - wep_auto_tick > 1 then
+			wep_auto_tick = os.clock()
+			wep_apply_all()
+		end
+	end)
 end
 
 do
@@ -9943,10 +13922,10 @@ do
 					end,
 				})
 
-				task.spawn(function()
-					while task.wait(5) do
-						if ui.window.Visible then
-							local _, Files = Utility.GetFiles(ConfigFolder, { ".cfg" })
+	task.spawn(function()
+		while task.wait(5) do
+			if ui.window.Visible then
+				local _, Files = Utility.GetFiles(ConfigFolder, { ".cfg" })
 
 							if #Files ~= #LastFiles then
 								LastFiles = Files
@@ -9966,7 +13945,7 @@ do
 				for _,v in Enum.EasingStyle:GetEnumItems() do
 					table.insert(TweenTypes, v.Name)
 				end
-				Personalization:Keybind({Name = "Window Key", Ignore = true, Key = Enum.KeyCode.Delete, Flag = "menu_key", Callback = function()
+				Personalization:Keybind({Name = "Window key", Ignore = true, Key = Enum.KeyCode.Delete, Flag = "menu_key", Callback = function()
 					ui.window.Open()
 				end})
 
@@ -9982,15 +13961,19 @@ do
 					end
 				end})
 				WatermarkText = Personalization:Textbox({
-					Name = "Watermark Text",
+					Name = "Watermark text",
 					Value = "ping: {ping}ms | fps: {fps} | user: {user} | {date}",
 					Flag = "menu_watermark_text",
 					Callback = function(v)
 						Watermark.SetText(v)
 					end
 				})
-				Personalization:Toggle({Name = "Keybind List", Flag = "menu_keybind_list", Value = true, Callback = function(v)
+				Personalization:Toggle({Name = "Keybind list", Flag = "menu_keybind_list", Value = true, Callback = function(v)
 					Library.KeybindsList.Status(v)
+				end})
+				Personalization:Dropdown({Name = "Keybind style", Values = {"Pressed", "All"}, Value = "All", Flag = "menu_keybind_style", Multi = false, Callback = function(v)
+					Library.KeybindsList.View = v
+					Library.KeybindsList.Refresh()
 				end})
 				Personalization:Slider({Name = "Animations", Min = 0, Max = 100, Value = 40, Flag = "menu_animation_speed", Callback = function(v)
 					Library.TweenSpeed = v / 100
@@ -10122,10 +14105,10 @@ do
 					end,
 				})
 
-				task.spawn(function()
-					while task.wait(5) do
-						if ui.window.Visible then
-							local _, Files = Utility.GetFiles(ThemeFolder, { ".cfg" })
+	task.spawn(function()
+		while task.wait(5) do
+			if ui.window.Visible then
+				local _, Files = Utility.GetFiles(ThemeFolder, { ".cfg" })
 
 							if #Files ~= #LastFiles then
 								LastFiles = Files
@@ -10210,6 +14193,13 @@ do
 			return
 		end
 
+		if method == "Raycast" and cheat.ignore_water and self == workspace then
+			local ray_args = {...}
+			if ray_args[3] then
+				ray_args[3].IgnoreWater = true
+				return __namecall(self, unpack(ray_args))
+			end
+		end
 		if method == "Raycast" and aimbot_mode == "Silent" then
 			local hitpart = target_part
 			if not (hitpart and debugtraceback():find("Bullet")) then
@@ -10252,12 +14242,15 @@ do
 		end
 		if method == "GetAttribute" then
 			local attribute = args[1]
-			if attribute == "AccuracyDeviation" then
+			if attribute == "AccuracyDeviation" and no_spread then
 				return 0
 			end
 		end
 		if method == "InvokeServer" then
 			local remote_name = self.Name
+			if remote_name == "Drowning" and cheat.anti_drown then
+				return nil
+			end
 			if remote_name == "FireProjectile" and aimbot_mode == "Silent" then
 				local r = table.create(3)
 				r[1] = args[2]
@@ -10269,6 +14262,10 @@ do
 		end
 		if method == "FireServer" then
 			local remote_name = self.Name
+			if remote_name == "UpdateCrouch" and cheat.fake_crouch then
+				args[1] = true
+				return __namecall(self, unpack(args))
+			end
 			if remote_name == "ProjectileInflict" then
 				if debugtraceback():find("CharacterController") then
 					return coroutine.yield()
@@ -10285,7 +14282,7 @@ do
 						sound.PlayOnRemove = true
 						sound:Destroy()
 					end)
-                end
+				end
 				if hit_logs then
 					local parent_model = args[1]
 					repeat parent_model = parent_model.Parent until parent_model == nil or parent_model.ClassName == "Model"
@@ -10305,6 +14302,9 @@ do
 				args[3] = nil
 				args[4] = nil
 				return __namecall(self, unpack(args))
+			end
+			if remote_name == "Drowning" and cheat.anti_drown then
+				return
 			end
 		end
 
@@ -10367,69 +14367,273 @@ do
 		end
 	end
 
-	local function sweep_mines()
+	local function each_mine(fn)
 		local roots = {
 			workspace:FindFirstChild("AiZones"),
 			workspace:FindFirstChild("NoCollision") and workspace.NoCollision:FindFirstChild("AiZones")
 		}
 		for _, root in roots do
 			if root then
-				destroy_in(root)
+				for _, folder_name in mine_folders do
+					local folder = root:FindFirstChild(folder_name)
+					if folder then
+						for _, mine in folder:GetChildren() do
+							fn(mine)
+						end
+					end
+				end
 			end
 		end
 		for _, inst in workspace:GetDescendants() do
 			if is_mine_name(inst.Name) and (inst:IsA("BasePart") or inst:IsA("Model")) then
-				pcall(function() inst:Destroy() end)
+				fn(inst.Parent:IsA("Model") and inst.Parent or inst)
 			end
 		end
 	end
 
-	local wired_roots = {}
-	local sweeping = false
-
-	local function wire_mines()
-		local roots = {
-			workspace:FindFirstChild("AiZones"),
-			workspace:FindFirstChild("NoCollision") and workspace.NoCollision:FindFirstChild("AiZones")
-		}
-		for _, root in roots do
-			if root and not wired_roots[root] then
-				wired_roots[root] = true
-				root.DescendantAdded:Connect(function(child)
-					if Library.Flags["misc_remove_mines"] and is_mine_name(child.Name) then
-						task.defer(function()
-							pcall(function() child:Destroy() end)
+	local mine_manip, mine_mode = false, "Explode All"
+	local miscsec = ui.sections.misc
+	local mine_mode_dropdown = nil
+	local mine_toggle = miscsec:Toggle({Name = "Mine manipulation", Value = false, Flag = "mine_manip_enabled", Callback = function(bool)
+		mine_manip = bool
+		cheat.feat.mine_manipulation = bool
+		if mine_mode_dropdown then mine_mode_dropdown.State(bool) end
+	end})
+	mine_mode_dropdown = miscsec:Dropdown({Name = "Mine mode", Values = {"Explode All", "Deactivate All"}, Value = "Explode All", Flag = "mine_manip_mode", Multi = false, Callback = function(str)
+		mine_mode = str
+	end})
+	mine_mode_dropdown.State(false)
+	task.spawn(function()
+		while task.wait(0.5) do
+			if mine_manip then
+				if mine_mode == "Explode All" and firetouchinterest then
+					pcall(function()
+						local char = LocalPlayer.Character
+						local leg = char and (char:FindFirstChild("LeftLowerLeg") or char:FindFirstChild("HumanoidRootPart"))
+						if not leg then return end
+						each_mine(function(mine)
+							local trigger = mine:FindFirstChild("Trigger")
+							if trigger then
+								pcall(firetouchinterest, leg, trigger, 0)
+								pcall(firetouchinterest, leg, trigger, 1)
+							end
 						end)
-					end
-				end)
+					end)
+				elseif mine_mode == "Deactivate All" then
+					pcall(function()
+						each_mine(function(mine)
+							local trigger = mine:FindFirstChild("Trigger")
+							if trigger then
+								pcall(function() trigger:Destroy() end)
+							end
+						end)
+					end)
+					task.wait(5)
+				else
+					task.wait(1)
+				end
+			end
+		end
+	end)
+
+	cheat.fake_crouch = false
+	miscsec:Toggle({Name = "Fake crouch", Value = false, Flag = "misc_fake_crouch", Callback = function(bool)
+		cheat.fake_crouch = bool
+		if bool then
+			pcall(function()
+				local rems = game:GetService("ReplicatedStorage"):FindFirstChild("Remotes")
+				local uc = rems and rems:FindFirstChild("UpdateCrouch")
+				if uc then
+					uc:FireServer(true)
+				end
+			end)
+		end
+	end})
+	local fake_map_owned = {}
+	local function fake_map_inventory()
+		local folder = game:GetService("ReplicatedStorage"):FindFirstChild("Players")
+		local data = folder and folder:FindFirstChild(LocalPlayer.Name)
+		return data and data:FindFirstChild("Inventory")
+	end
+	local function fake_map_apply()
+		local inv = fake_map_inventory()
+		if not inv then return end
+		local list = game:GetService("ReplicatedStorage"):FindFirstChild("ItemsList")
+		for _, entry in {{name = "DAGR", slot = "EquipmentGPS"}, {name = "EstonianBorderMap", slot = "EquipmentMap"}, {name = "Pathfinder", slot = "EquipmentCompass"}} do
+			local has = inv:FindFirstChild(entry.name)
+			if not has then
+				local obj = Instance.new("ObjectValue")
+				obj.Name = entry.name
+				if list then obj.Value = list:FindFirstChild(entry.name) end
+				obj:SetAttribute("Slot", entry.slot)
+				obj.Parent = inv
+				fake_map_owned[entry.name] = obj
 			end
 		end
 	end
-
-	local function sweep_loop()
-		if sweeping then
-			return
+	local function fake_map_remove()
+		for name, obj in fake_map_owned do
+			if obj and obj.Parent then pcall(function() obj:Destroy() end) end
+			fake_map_owned[name] = nil
 		end
-		sweeping = true
+	end
+	miscsec:Toggle({Name = "Fake map", Value = false, Flag = "fake_map", Callback = function(bool)
+		if bool then
+			pcall(fake_map_apply)
+		else
+			pcall(fake_map_remove)
+		end
+	end})
+	local mod_enabled, mod_volume = false, 3
+	local mod_tracked = {}
+	local mod_group_id = 3765739
+	local mod_group_roles = {
+		["Tester"] = true,
+		["Content Creator"] = true,
+		["Test Coordinator"] = true,
+		["New Devs"] = true,
+		["Dev Team"] = true,
+		["Moderator"] = true,
+		["Head Moderator"] = true,
+		["Admin"] = true,
+		["Developer"] = true,
+		["Lead developer"] = true
+	}
+	local mod_group_cache = {}
+	local function mod_group_role(player)
+		if player == LocalPlayer then return false end
+		local cached = mod_group_cache[player]
+		if cached ~= nil then return cached end
+		mod_group_cache[player] = false
 		task.spawn(function()
-			while task.wait(2) do
-				if not Library.Flags["misc_remove_mines"] then
-					sweeping = false
-					return
+			local ok, role = pcall(function()
+				return player:GetRoleInGroup(mod_group_id)
+			end)
+			if ok and role and mod_group_roles[role] then
+				mod_group_cache[player] = true
+			end
+		end)
+		return false
+	end
+	local function mod_play(asset)
+		if asset == "" then return end
+		local s = Instance.new("Sound")
+		s.SoundId = asset
+		s.Volume = mod_volume
+		s.Parent = SoundService
+		s.PlayOnRemove = true
+		s:Destroy()
+	end
+	local function mod_is_mod(player)
+		if player == LocalPlayer then return false end
+		return mod_group_role(player)
+	end
+	local function mod_scan()
+		for _, player in Players:GetPlayers() do
+			if mod_is_mod(player) then
+				if not mod_tracked[player] then
+					mod_tracked[player] = true
+					Library.Notification("moderator join " .. player.Name, 9999)
+					mod_play(admin_join_asset)
 				end
-				sweep_mines()
+			elseif mod_tracked[player] then
+				mod_tracked[player] = nil
+				Library.Notification("moderator leave " .. player.Name, 9999)
+				mod_play(admin_leave_asset)
+			end
+		end
+	end
+	local mod_volume_slider = nil
+	local mod_toggle = miscsec:Toggle({Name = "Moderator detector", Value = false, Flag = "misc_moderator_detector", Callback = function(bool)
+		mod_enabled = bool
+		if mod_volume_slider then mod_volume_slider.State(bool) end
+		if bool then
+			mod_scan()
+		else
+			table.clear(mod_tracked)
+		end
+	end})
+	mod_volume_slider = miscsec:Slider({Name = "Moderator volume", Min = 0.1, Max = 10, Float = 0.1, Value = 3, Flag = "misc_moderator_volume", Suffix = "%s", Callback = function(int)
+		mod_volume = int
+	end})
+	mod_volume_slider.State(false)
+	local cheater_detector = false
+	miscsec:Toggle({Name = "Cheater detector", Value = false, Flag = "cheatwatch_enabled", Callback = function(bool)
+		cheater_detector = bool
+	end})
+	Players.PlayerRemoving:Connect(function(player)
+		mod_group_cache[player] = nil
+		if mod_tracked[player] then
+			mod_tracked[player] = nil
+			if mod_enabled then
+				Library.Notification("moderator leave " .. player.Name, 9999)
+				mod_play(admin_leave_asset)
+			end
+		end
+	end)
+	task.spawn(function()
+		while task.wait(2) do
+			if mod_enabled then
+				mod_scan()
+			end
+		end
+	end)
+	miscsec:Toggle({Name = "Report notifications", Value = false, Flag = "misc_report_notifications", Callback = function(bool)
+		cheat.report_notifications = bool
+	end})
+	miscsec:Button({Name = "Show current Reports", Callback = function()
+		local folder = game:GetService("ReplicatedStorage"):FindFirstChild("Players")
+		local data = folder and folder:FindFirstChild(LocalPlayer.Name)
+		local status = data and data:FindFirstChild("Status")
+		local uac = status and status:FindFirstChild("UAC")
+		local reports = uac and uac:FindFirstChild("Reports")
+		local total = reports and reports:GetAttribute("1") or 0
+		Library.Notification("You currently have " .. tostring(total) .. " report(s)", 4)
+	end})
+	cheat.report_notifications = false
+	local report_last_total = nil
+	local function report_total()
+		local folder = game:GetService("ReplicatedStorage"):FindFirstChild("Players")
+		local data = folder and folder:FindFirstChild(LocalPlayer.Name)
+		local status = data and data:FindFirstChild("Status")
+		local uac = status and status:FindFirstChild("UAC")
+		local reps = uac and uac:FindFirstChild("Reports")
+		if not reps then return 0 end
+		local n = 0
+		for _, v in reps:GetAttributes() do
+			if typeof(v) == "number" then
+				n += v
+			end
+		end
+		return n
+	end
+	task.spawn(function()
+		while task.wait(0.5) do
+			if cheat.report_notifications then
+				local total = report_total()
+				if report_last_total == nil then
+					report_last_total = total
+				elseif total > report_last_total then
+					Library.Notification("You were reported! (+" .. (total - report_last_total) .. " report(s), Total: " .. total .. ")", 7)
+					report_last_total = total
+				elseif total < report_last_total then
+					report_last_total = total
+				end
+			end
+		end
+	end)
+	local recent_folder = game:GetService("ReplicatedStorage"):FindFirstChild("ReportList")
+	recent_folder = recent_folder and recent_folder:FindFirstChild("Recent")
+	if recent_folder then
+		recent_folder.ChildAdded:Connect(function(child)
+			if cheat.report_notifications then
+				local name = child.Name:match("(.+)_([^_]+)$")
+				if name == LocalPlayer.Name then
+					Library.Notification("Added to Recent Reports list!", 7)
+				end
 			end
 		end)
 	end
-
-	local miscsec = ui.sections.misc
-	miscsec:Toggle({Name = "Remove mines", Value = false, Flag = "misc_remove_mines", Callback = function(bool)
-		if bool then
-			wire_mines()
-			sweep_mines()
-			sweep_loop()
-		end
-	end})
 	miscsec:Button({Name = "Diag", Callback = function()
 		local out = {}
 		local itemslist = game:GetService("ReplicatedStorage"):FindFirstChild("ItemsList")
@@ -10482,6 +14686,25 @@ do
 		for _, line in out do
 			print("[diag] " .. line)
 		end
-		Library.Notification("diag printed in console", 3)
+		Library.Notification("diag printed", 3)
 	end})
+	local detector_tick = 0
+	cheat.utility.new_heartbeat(function()
+		if not cheater_detector or os.clock() - detector_tick < 5 then return end
+		detector_tick = os.clock()
+		local folder = game:GetService("ReplicatedStorage"):FindFirstChild("Players")
+		for _, player in Players:GetPlayers() do
+			if player ~= LocalPlayer then
+				local data = folder and folder:FindFirstChild(player.Name)
+				local journey = data and data:FindFirstChild("Status") and data.Status:FindFirstChild("Journey")
+				local stats = journey and journey:FindFirstChild("Statistics")
+				local kills = stats and (stats:GetAttribute("K_PVP") or stats:GetAttribute("Kills")) or 0
+				local deaths = stats and (stats:GetAttribute("D_PVP") or stats:GetAttribute("Deaths")) or 0
+				local kd = kills / math.max(1, deaths)
+				if kd >= 15 then
+					Library.Notification("Cheater detector: suspicious K/D " .. player.Name .. " (" .. ("%.1f"):format(kd) .. ")", 5)
+				end
+			end
+		end
+	end)
 end
