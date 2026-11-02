@@ -1,56 +1,72 @@
-local placeId = game.PlaceId
-local creatorId = game.CreatorId
+local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/zg071/moneyblox/refs/heads/main/assets/lib.lua"))()
 
-local gui = Instance.new("ScreenGui")
-gui.ResetOnSpawn = false
-gui.Parent = game:GetService("CoreGui")
+Library.FontColor = Color3.fromRGB(255, 255, 255)
+Library.MainColor = Color3.fromRGB(26, 26, 26)
+Library.BackgroundColor = Color3.fromRGB(16, 18, 19)
+Library.OutlineColor = Color3.fromRGB(38, 40, 41)
+Library.AccentColor = Color3.fromRGB(220, 100, 110)
+Library.Black = Color3.fromRGB(0, 0, 0)
+Library.RiskColor = Color3.fromRGB(255, 50, 50)
 
-local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 240, 0, 90)
-frame.Position = UDim2.new(0.5, -120, 0.5, -45)
-frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-frame.BorderSizePixel = 0
-frame.Parent = gui
+Library.AccentColorDark = Library:GetDarkerColor(Library.AccentColor)
 
-Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 6)
+local Window = Library:CreateWindow({
+    Title = "swimhub",
+    AutoShow = true,
+    Center = true,
+    Size = UDim2.fromOffset(450, 260),
+})
 
-local label = Instance.new("TextLabel")
-label.Size = UDim2.new(1, 0, 0, 30)
-label.Position = UDim2.new(0, 0, 0, 12)
-label.BackgroundTransparency = 1
-label.Text = "pls join in my discord :3"
-label.TextColor3 = Color3.fromRGB(230, 230, 230)
-label.TextSize = 14
-label.Font = Enum.Font.Gotham
-label.Parent = frame
+local Tab = Window:AddTab("")
 
-local button = Instance.new("TextButton")
-button.Size = UDim2.new(1, -24, 0, 28)
-button.Position = UDim2.new(0, 12, 0, 50)
-button.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
-button.Text = "copy link"
-button.TextColor3 = Color3.fromRGB(255, 255, 255)
-button.TextSize = 13
-button.Font = Enum.Font.Gotham
-button.BorderSizePixel = 0
-button.Parent = frame
+local Left = Tab:AddLeftGroupbox("Scripts")
+local Right = Tab:AddRightGroupbox(".gg/YMyHNx2rqZ")
 
-Instance.new("UICorner", button).CornerRadius = UDim.new(0, 5)
+local Games = {
+    ["Project Delta"] = "https://raw.githubusercontent.com/zg071/moneyblox/refs/heads/main/project_delta.lua",
+    ["State of Anarchy"] = "https://raw.githubusercontent.com/zg071/moneyblox/refs/heads/main/state_of_anarchy.lua",
+    ["Universal"] = "https://raw.githubusercontent.com/zg071/moneyblox/refs/heads/main/universal.lua",
+}
 
-button.MouseButton1Click:Connect(function()
-    if setclipboard then
-        setclipboard("discord.com/invite/YMyHNx2rqZ")
-    end
+local GameOrder = {
+    "Project Delta",
+    "State of Anarchy",
+    "Universal"
+}
 
-    gui:Destroy()
+local SelectedGame = nil
+local SelectedLabel = Right:AddLabel("Selected: none")
 
-    local isGroup = game.CreatorType == Enum.CreatorType.Group
+for _, name in ipairs(GameOrder) do
+    Left:AddButton({
+        Text = name,
+        Func = function()
+            SelectedGame = name
+            SelectedLabel:SetText("Selected: " .. name)
+        end,
+    })
+end
 
-    if isGroup and creatorId == 3810537 then
-        loadstring(game:HttpGet("https://raw.githubusercontent.com/zg071/moneyblox/refs/heads/main/state_of_anarchy.lua"))()
-    elseif placeId == 7336302630 or (isGroup and creatorId == 3765739) then
-        loadstring(game:HttpGet("https://raw.githubusercontent.com/zg071/moneyblox/refs/heads/main/project_delta.lua"))()
-    else
-        loadstring(game:HttpGet("https://raw.githubusercontent.com/zg071/moneyblox/refs/heads/main/universal.lua"))()
-    end
-end)
+Right:AddDivider()
+
+Right:AddButton({
+    Text = "Load",
+    Func = function()
+        if not SelectedGame then 
+            return Library:Notify("No script selected.", 3) 
+        end
+        
+        if Games[SelectedGame] and Games[SelectedGame] ~= "" then
+            local ok, err = pcall(function()
+                loadstring(game:HttpGet(Games[SelectedGame]))()
+            end)
+            if not ok then
+                Library:Notify("Load failed: " .. tostring(err), 4)
+            else
+                Window.Holder.Visible = false
+                Library.Toggled = false
+                Library:Notify("Loaded: " .. SelectedGame, 3)
+            end
+        end
+    end,
+})
